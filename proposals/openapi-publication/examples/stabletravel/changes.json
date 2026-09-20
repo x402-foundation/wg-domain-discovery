@@ -1,0 +1,8 @@
+{
+  "status": "proposed, not deployed or merchant-approved",
+  "source": "https://stabletravel.dev/openapi.json",
+  "changes": [
+    "Proposed route-template correction from /trips/id to /trips/{id}, with required string parameter; usage-guide evidence, not live route verification.",
+    "Added provisional x-payment mode/protocol summaries; no x402 version or recipient inferred from incomplete native metadata."
+  ]
+}

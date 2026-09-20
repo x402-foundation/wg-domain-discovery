@@ -1,0 +1,14 @@
+{
+  "status": "proposed, not deployed or merchant-approved",
+  "source": "https://stableupload.dev/openapi.json",
+  "changes": [
+    "GET /api/uploads: no-new-payment summary based on the service usage guide; SIWX security retained.",
+    "Converted documented :uploadId notation to OpenAPI {uploadId}; added required string parameter.",
+    "GET /api/download/{uploadId}: no-new-payment summary based on the service usage guide; SIWX security retained.",
+    "Assigned unique operationId site_create to POST /api/site.",
+    "Assigned unique operationId site_update to PUT /api/site.",
+    "PUT /api/site: no-new-payment summary based on the service usage guide; SIWX security retained.",
+    "POST /api/site/activate: no-new-payment summary based on the service usage guide; SIWX security retained.",
+    "Added provisional x-payment mode/protocol summaries; no x402 version or recipient inferred from incomplete native metadata."
+  ]
+}

@@ -1,0 +1,212 @@
+# StableTravel API
+
+> Pay-per-request access to flight prices and booking links (Google Flights via SerpAPI), award availability (Seats.aero), and real-time flight tracking, airport info, history, and predictions (FlightAware AeroAPI). No auth, no API keys, no subscriptions. Powered by x402/MPP micropayments (USDC on Base, Solana, or Tempo).
+
+## Choosing the Right Data Source
+
+StableTravel has three data providers. Pick the right one for the job:
+
+| Need | Use | Why |
+|------|-----|-----|
+| **Cheapest flight price** | Google Flights (`/api/google-flights/search`) | Aggregates prices across all airlines, OTAs, and booking sites. Same results as google.com/flights. |
+| **Where to actually book a fare** | Google Flights (`/api/google-flights/booking`) | Returns airline and OTA booking links with prices for a specific itinerary. |
+| **Award seat availability** | Seats.aero (`/api/seats-aero/search`) | Cached mileage-award inventory across programs. Best for finding points/miles redemptions. |
+| **Track a live flight** | FlightAware (`/api/flightaware/flights/`) | Real-time position, track, delays, ATC routing. |
+| **Airport info & delays** | FlightAware (`/api/flightaware/airports/`) | Weather, delay stats, scheduled flights, disruptions. |
+| **Flight history** | FlightAware (`/api/flightaware/history/`) | Historical tracks, routes, operator flight logs. |
+
+**Rule of thumb:** Google Flights for cash-price discovery, Seats.aero for award availability, FlightAware for operational and tracking data.
+
+## Scope
+
+StableTravel is a flight data API. It returns prices, award availability, booking links, and operational data.
+
+It does **not** issue tickets, hold reservations, or take payment for travel — booking happens on the airline or OTA page that `/api/google-flights/booking` links to. There are no hotel, activity, or ground-transfer endpoints. If a traveler needs those, use a different provider.
+
+## Award Travel Workflow
+
+Use Seats.aero only for points/miles award travel, not cash prices or flight status.
+
+1. If the traveler gives origin, destination, date range, and cabin, call `/api/seats-aero/search` first.
+2. For each promising search result, call `/api/seats-aero/trips/{id}` with the returned availability `ID` to get flight segments, mileage cost, taxes, remaining seats, and booking links.
+3. Use `/api/seats-aero/routes?source=...` only to discover covered flight route pairs for a mileage program. These are airline origin→destination pairs, not API routes.
+4. Use `/api/seats-aero/availability?source=...` for broad mileage-program sweeps such as "any North America to Europe business awards in December"; page with `cursor`.
+5. If the traveler asks for cheapest cash fare instead, use Google Flights. If they ask for operational tracking, use FlightAware.
+
+## How It Works
+
+Send a standard HTTP request to any endpoint. Payment is handled automatically via x402/MPP protocol headers. No signup, no tokens, no OAuth.
+
+## Quick Start
+
+```bash
+# Cheapest one-way fares JFK -> LAX
+npx agentcash fetch "https://stabletravel.dev/api/google-flights/search?departure_id=JFK&arrival_id=LAX&outbound_date=2026-09-15&type=2"
+
+# Track a live flight
+npx agentcash fetch "https://stabletravel.dev/api/flightaware/flights/UAL123"
+
+# Find award seats SFO -> FRA in business
+npx agentcash fetch "https://stabletravel.dev/api/seats-aero/search?origin_airport=SFO&destination_airport=FRA&cabin=business"
+```
+
+## Google Flights (via SerpAPI)
+
+Real-time Google Flights data — prices, schedules, and booking links aggregated across all airlines and booking sites. This is the primary surface for cash fares.
+
+### Search Flights
+- **GET /api/google-flights/search** ($0.02) — Search Google Flights
+  - departure_id: Airport IATA code, city, or kgmid (e.g. "JFK", "CDG")
+  - arrival_id: Airport IATA code, city, or kgmid
+  - outbound_date: YYYY-MM-DD
+  - return_date: YYYY-MM-DD (required for round trip)
+  - type: 1 = Round trip (default), 2 = One way, 3 = Multi-city
+  - travel_class: 1 = Economy, 2 = Premium economy, 3 = Business, 4 = First
+  - adults, children, infants_in_seat, infants_on_lap: Passenger counts
+  - stops: 0 = Any, 1 = Nonstop, 2 = Up to 1 stop, 3 = Up to 2 stops
+  - max_price: Maximum price filter
+  - include_airlines / exclude_airlines: Comma-separated airline codes
+  - currency: 3-letter code (default USD)
+  - Returns: best_flights, other_flights, price_insights (lowest price, typical range, price history)
+
+### Get Booking Options
+- **GET /api/google-flights/booking** ($0.02) — Get booking links and prices for a specific flight
+  - Same params as search, plus departure_token (from search result)
+  - Returns: selected_flights, booking_options (airline sites, OTAs, prices, URLs)
+
+## Seats.aero Award Availability
+
+Cached points-and-miles award inventory from Seats.aero. Use this when the traveler wants to redeem airline miles rather than compare cash fares.
+
+| Endpoint | Method | Price | Description |
+|---|---|---|---|
+| /api/seats-aero/search | GET | $0.02 | Search cached award availability by origin, destination, date, cabin, carrier, and pagination |
+| /api/seats-aero/availability | GET | $0.04 | Retrieve bulk cached availability for one mileage program, optionally filtered by region/date/cabin |
+| /api/seats-aero/trips/{id} | GET | $0.02 | Get flight-level trip details and booking links for an availability ID |
+| /api/seats-aero/routes | GET | $0.01 | List flight route pairs covered by a mileage program source |
+
+**Normal path:** `/api/seats-aero/search` → `/api/seats-aero/trips/{id}`.
+**Open-ended award hunting:** `/api/seats-aero/routes?source=united` → `/api/seats-aero/availability?source=united` → `/api/seats-aero/trips/{id}`.
+**Do not use Seats.aero for:** cash fares, ticket booking, or live flight status.
+
+### Seats.aero Search
+- **origin_airport** (required): IATA airport code list, comma-delimited for multiple origins (e.g. SFO,LAX)
+- **destination_airport** (required): IATA airport code list, comma-delimited for multiple destinations (e.g. FRA,LHR)
+- **start_date / end_date**: YYYY-MM-DD departure date filters
+- **cabin**: economy, premium, business, or first
+- **carriers**: Comma-separated carrier codes (e.g. UA,LH)
+- **only_direct_flights**: true to require direct award availability
+- **order_by**: lowest_mileage to sort by cheapest mileage
+- **cursor / skip / take**: Pagination controls; take must be 10-1000
+
+### Seats.aero Availability / Routes
+- **source** (required): Mileage program source, such as united or aeroplan
+- **origin_region / destination_region**: North America, South America, Africa, Asia, Europe, or Oceania
+- **cabin**, **start_date**, **end_date**, **cursor**, **skip**, **take** work the same as search
+- **routes response**: Covered airline flight route pairs, e.g. SFO→FRA. These are not StableTravel API route definitions.
+
+The Seats.aero live-search endpoint is not exposed here because Seats.aero documents live search as commercial-only.
+
+## FlightAware — Real-Time Flights
+
+| Endpoint | Method | Price | Description |
+|---|---|---|---|
+| /api/flightaware/flights/search | GET | $0.10 | Search flights by query string (idents, latlong, airline) |
+| /api/flightaware/flights/search/positions | GET | $0.10 | Search flights with position data |
+| /api/flightaware/flights/search/count | GET | $0.04 | Get count of flights matching a search |
+| /api/flightaware/flights/search/advanced | GET | $0.10 | Advanced flight search with complex query syntax |
+| /api/flightaware/flights/{ident} | GET | $0.01 | Get flights by ident (flight number, registration, etc.) |
+| /api/flightaware/flights/{ident}/canonical | GET | $0.002 | Get canonical ident for a flight |
+| /api/flightaware/flights/{ident}/intents | POST | $0.001 | Set flight intent for push notifications |
+| /api/flightaware/flights/{id}/position | GET | $0.02 | Get latest position for a flight |
+| /api/flightaware/flights/{id}/track | GET | $0.024 | Get full track/positions for a flight |
+| /api/flightaware/flights/{id}/route-info | GET | $0.02 | Get route info (fixes, waypoints) for a flight |
+| /api/flightaware/flights/{id}/map | GET | $0.06 | Get flight track map payload (proxied from FlightAware) |
+
+## FlightAware — Airports
+
+| Endpoint | Method | Price | Description |
+|---|---|---|---|
+| /api/flightaware/airports | GET | $0.01 | List all airports |
+| /api/flightaware/airports/nearby | GET | $0.008 | Find airports near a lat/lng |
+| /api/flightaware/airports/delays | GET | $0.10 | Get all airport delay information |
+| /api/flightaware/airports/{id} | GET | $0.03 | Get airport info by code |
+| /api/flightaware/airports/{id}/canonical | GET | $0.002 | Get canonical airport code |
+| /api/flightaware/airports/{id}/nearby | GET | $0.008 | Find airports near a specific airport |
+| /api/flightaware/airports/{id}/delays | GET | $0.02 | Get delays for a specific airport |
+| /api/flightaware/airports/{id}/flights | GET | $0.04 | Get all flights at an airport |
+| /api/flightaware/airports/{id}/flights/arrivals | GET | $0.01 | Get arrivals at an airport |
+| /api/flightaware/airports/{id}/flights/departures | GET | $0.01 | Get departures from an airport |
+| /api/flightaware/airports/{id}/flights/scheduled-departures | GET | $0.01 | Get scheduled departures |
+| /api/flightaware/airports/{id}/flights/scheduled-arrivals | GET | $0.01 | Get scheduled arrivals |
+| /api/flightaware/airports/{id}/flights/to/{dest_id} | GET | $0.10 | Get flights between two airports |
+| /api/flightaware/airports/{id}/flights/counts | GET | $0.20 | Get flight count statistics |
+| /api/flightaware/airports/{id}/weather/observations | GET | $0.004 | Get METAR weather observations |
+| /api/flightaware/airports/{id}/weather/forecast | GET | $0.004 | Get TAF weather forecast |
+| /api/flightaware/airports/{id}/routes/{dest_id} | GET | $0.04 | Get route info between airports |
+
+## FlightAware — Flight History
+
+| Endpoint | Method | Price | Description |
+|---|---|---|---|
+| /api/flightaware/history/flights/{ident} | GET | $0.04 | Get historical flights by ident |
+| /api/flightaware/history/flights/{id}/track | GET | $0.12 | Get historical flight track |
+| /api/flightaware/history/flights/{id}/map | GET | $0.28 | Get historical flight map payload (proxied from FlightAware) |
+| /api/flightaware/history/flights/{id}/route-info | GET | $0.08 | Get historical flight route info |
+| /api/flightaware/history/airports/{id}/flights/arrivals | GET | $0.04 | Get historical arrivals at airport |
+| /api/flightaware/history/airports/{id}/flights/departures | GET | $0.04 | Get historical departures from airport |
+| /api/flightaware/history/airports/{id}/flights/to/{dest_id} | GET | $0.24 | Get historical flights between airports |
+| /api/flightaware/history/aircraft/{registration}/last-flight | GET | $0.40 | Get last flight for an aircraft |
+| /api/flightaware/history/operators/{id}/flights | GET | $0.04 | Get historical flights by operator |
+
+## FlightAware — Disruption Counts
+
+| Endpoint | Method | Price | Description |
+|---|---|---|---|
+| /api/flightaware/disruption-counts/{entity_type} | GET | $0.01 | Get disruption stats by entity type (airline, origin, destination) |
+| /api/flightaware/disruption-counts/{entity_type}/{id} | GET | $0.01 | Get disruption stats for a specific entity |
+
+## FlightAware Common Parameters
+
+### Flight Search
+- **query** (required): Search string using FlightAware query syntax
+  - Ident search: `-idents "UAL*"`
+  - Lat/long box: `-latlong "36 -104 30 -86"`
+  - Airline: `-airline "UAL"`
+
+### Flight by Ident
+- **ident** (path): Flight ident (e.g. UAL123, N12345, SWA100)
+- **ident_type**: fa_flight_id, designator, or registration
+- **start/end**: ISO 8601 time range filter
+- **cursor**: Pagination cursor
+
+### Airport Operations
+- **id** (path): ICAO or IATA airport code (e.g. KJFK, JFK)
+- **airline**: Filter by airline IATA code
+- **type**: arrivals, departures, enroute, scheduled_arrivals, scheduled_departures
+
+### Weather
+- **temperature_units**: fahrenheit or celsius
+- **return_nearby_weather**: true to include nearby station data
+
+### Disruption Counts
+- **entity_type** (path): airline, origin, or destination
+- **time_period**: today, yesterday, last3days, last7days, last14days, last30days
+
+## Typical Workflows
+
+1. **Price a trip**: /google-flights/search → /google-flights/booking for airline and OTA links
+2. **Find award seats**: /seats-aero/search → /seats-aero/trips/{id} for flight details and booking links
+3. **Explore a mileage program**: /seats-aero/routes?source=united → /seats-aero/availability?source=united
+4. **Cash vs. points**: /google-flights/search and /seats-aero/search for the same city pair, then compare fare against mileage cost
+5. **Track a live flight**: /flightaware/flights/{ident} → get fa_flight_id → /flightaware/flights/{id}/track
+6. **Check airport status**: /flightaware/airports/{id} → /flightaware/airports/{id}/delays + /flightaware/airports/{id}/weather/observations
+7. **Research flight history**: /flightaware/history/flights/{ident} → /flightaware/history/flights/{id}/track
+
+## Authentication
+
+No API keys needed. Payment via USDC on Base, Solana, or Tempo (x402/MPP protocol) serves as authentication. Use `npx agentcash fetch` for automatic payment handling.
+
+## OpenAPI Spec
+
+Full schema available at `/openapi.json`

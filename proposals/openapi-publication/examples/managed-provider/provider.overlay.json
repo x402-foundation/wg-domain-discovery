@@ -1,0 +1,49 @@
+{
+  "overlay": "1.1.0",
+  "info": {
+    "title": "Illustrative managed payment provider",
+    "version": "example-2026-09-19"
+  },
+  "actions": [
+    {
+      "target": "$['paths']['/api/google-flights/search']['get']",
+      "update": {
+        "x-payment-info": {
+          "price": {
+            "mode": "fixed",
+            "currency": "USD",
+            "amount": "0.020000"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "tempo",
+                "intent": "charge",
+                "currency": "0x20c000000000000000000000b9537d11c60e8b50"
+              }
+            }
+          ]
+        },
+        "x-payment": {
+          "mode": "required",
+          "protocols": [
+            {
+              "name": "x402"
+            },
+            {
+              "name": "mpp"
+            }
+          ]
+        },
+        "responses": {
+          "402": {
+            "description": "Payment Required"
+          }
+        }
+      }
+    }
+  ]
+}

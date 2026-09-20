@@ -1,0 +1,10 @@
+{
+  "status": "proposed, not deployed or merchant-approved",
+  "source": "https://stablestudio.dev/openapi.json",
+  "changes": [
+    "Added missing required jobId path parameter.",
+    "GET /api/jobs/{jobId}: no-new-payment summary based on the service usage guide; SIWX security retained.",
+    "Added proposed OpenAPI link from generation jobId to jobs_status; runtime pollUrl still subject to client origin policy.",
+    "Added provisional x-payment mode/protocol summaries; no x402 version or recipient inferred from incomplete native metadata."
+  ]
+}

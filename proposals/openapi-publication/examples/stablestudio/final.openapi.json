@@ -1,0 +1,264 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "StableStudio proposed publication example",
+    "description": "Pay-per-generation AI image and video creation. No subscriptions ever.",
+    "version": "example-2026-09-19",
+    "contact": {
+      "name": "StableStudio",
+      "email": "support@merit.systems",
+      "x-agentcash-owner": "merit_systems"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://stablestudio.dev"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Generate"
+    },
+    {
+      "name": "Jobs"
+    },
+    {
+      "name": "Upload"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "siwx": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "SIGN-IN-WITH-X"
+      }
+    }
+  },
+  "paths": {
+    "/api/generate/nano-banana-pro/generate": {
+      "post": {
+        "operationId": "generate_nano-banana-pro_generate",
+        "summary": "generate with Nano Banana Pro Returns an async job with a pollUrl. Poll the returned pollUrl with SIWX until the job is complete or failed.",
+        "tags": [
+          "Generate"
+        ],
+        "x-payment-info": {
+          "price": {
+            "mode": "dynamic",
+            "currency": "USD",
+            "min": "0",
+            "max": "10.00"
+          },
+          "protocols": [
+            {
+              "x402": {}
+            },
+            {
+              "mpp": {
+                "method": "tempo",
+                "intent": "charge",
+                "currency": "0x20c000000000000000000000b9537d11c60e8b50"
+              }
+            }
+          ],
+          "has_checkout": true
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "A detailed description of the image you want to generate"
+                  },
+                  "aspectRatio": {
+                    "default": "1:1",
+                    "description": "The aspect ratio of the generated image",
+                    "type": "string",
+                    "enum": [
+                      "1:1",
+                      "2:3",
+                      "3:2",
+                      "3:4",
+                      "4:3",
+                      "4:5",
+                      "5:4",
+                      "9:16",
+                      "16:9",
+                      "21:9"
+                    ]
+                  },
+                  "imageSize": {
+                    "default": "1K",
+                    "description": "The resolution of the generated image",
+                    "type": "string",
+                    "enum": [
+                      "1K",
+                      "2K",
+                      "4K"
+                    ]
+                  }
+                },
+                "required": [
+                  "prompt"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "jobId": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string",
+                      "const": "pending"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "pollUrl": {
+                      "type": "string",
+                      "format": "uri",
+                      "description": "Poll this exact URL with SIWX until the job is complete or failed."
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "jobId",
+                    "status",
+                    "type",
+                    "pollUrl"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "links": {
+              "pollJob": {
+                "operationId": "jobs_status",
+                "parameters": {
+                  "jobId": "$response.body#/jobId"
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Payment Required"
+          }
+        },
+        "x-payment": {
+          "mode": "required",
+          "protocols": [
+            {
+              "name": "x402"
+            },
+            {
+              "name": "mpp"
+            }
+          ]
+        }
+      }
+    },
+    "/api/jobs/{jobId}": {
+      "get": {
+        "operationId": "jobs_status",
+        "summary": "Get job status",
+        "tags": [
+          "Jobs"
+        ],
+        "security": [
+          {
+            "siwx": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "type": {
+                      "type": "string"
+                    },
+                    "input": {},
+                    "status": {
+                      "type": "string"
+                    },
+                    "progress": {
+                      "type": "number"
+                    },
+                    "result": {},
+                    "error": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "type",
+                    "input",
+                    "status",
+                    "progress",
+                    "createdAt",
+                    "updatedAt"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "402": {
+            "description": "Authentication Required"
+          }
+        },
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "x-payment": {
+          "mode": "none"
+        }
+      }
+    }
+  }
+}

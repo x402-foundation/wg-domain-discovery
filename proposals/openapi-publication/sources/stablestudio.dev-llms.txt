@@ -1,0 +1,604 @@
+# StableStudio API
+
+## GPT Image 2.5
+
+Use `gpt-image-2.5-flare` for fast everyday image generation or `gpt-image-2.5-sunburst` for precise editing. POST `/api/generate/{model}/generate` with `prompt`, or `/api/generate/{model}/edit` with `prompt` and `images` (1–16 public image URLs). Follow the payment challenge, then poll the returned `jobId` as described below; do not resubmit pending jobs.
+
+Both models support `quality`: `low`, `medium`, `high` (default), `xhigh`, `max`; `size`: `1024x1024` (default), `1536x1024`, `1024x1536`. Explicit sizes/qualities keep checkout prices deterministic; `auto` size/quality and custom dimensions are not exposed. Prices range from $0.005 to $0.211 per image. For transparent output, set `background: "transparent"` and `output_format: "png"` or `"webp"`.
+
+Example edit body: `{"prompt":"Make the mug blue, preserving the logo","images":["https://example.com/mug.png"],"quality":"xhigh","size":"1024x1024"}`.
+
+
+> AI image/video generation via micropayments. USDC on Base, Solana, or Tempo. No API keys.
+
+Base URL: `https://stablestudio.dev`
+
+## Recommended Defaults
+
+- **Image generation:** `gpt-image-2` — Best default quality. Use it for most image tasks unless the user prioritizes speed or explicitly requests another model.
+- **Fast image generation:** `nano-banana-pro` — Use when speed matters or the user wants a faster draft; supports up to 4K resolution.
+- **Image to SVG conversion:** `arrow-1.1` — Use `/api/generate/arrow-1.1/vectorize` when the user wants to convert an existing image into an SVG.
+- **Video generation:** `veo-3.1` — Best quality/cost ratio, supports up to 1080p resolution
+
+## Payment Flow
+
+Generation endpoints are high-intent paid calls. The unpaid 402 challenge may include `checkout_session` metadata with the selected model, operation, prompt/media summary, price, preview image, and a completion handler for the same paid endpoint. Payment terms remain authoritative in the x402/MPP challenge headers; legacy clients can keep using the normal paid POST and retry flow.
+
+1. `POST /api/generate/{model}/{operation}` without payment header
+   - Returns `402` with `PAYMENT-REQUIRED` header (base64 JSON)
+   - Response JSON may include `checkout_session` for high-intent review UI. Treat it as display/flow metadata, not payment authority.
+
+2. Decode requirements, sign USDC authorization, POST with `PAYMENT-SIGNATURE` header
+   - Returns `200` with `{jobId, status:"pending"}` and `PAYMENT-RESPONSE` header
+
+3. Poll `GET /api/jobs/{jobId}` with `SIGN-IN-WITH-X` header until complete
+
+## 402 Response Format
+
+Payment requirements are in the header:
+
+```
+PAYMENT-REQUIRED: <base64>
+```
+
+Decoded:
+
+```json
+{
+  "x402Version": 2,
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "134000",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "payTo": "0xfbd7b7Ed48146aD9bEfF956212c77cE056815ad0"
+    }
+  ],
+  "resource": {
+    "url": "https://stablestudio.dev/api/generate/nano-banana-pro/generate",
+    "description": "Nano Banana Pro - generate"
+  }
+}
+```
+
+`amount` is USDC micro-units (6 decimals). 134000 = $0.134.
+
+The response body may also include a UCP-style checkout session:
+
+```json
+{
+  "checkout_session": {
+    "status": "ready_for_complete",
+    "line_items": [
+      {
+        "item": {
+          "title": "GPT Image 2 Edit",
+          "image_url": "https://example.com/input.png"
+        }
+      }
+    ],
+    "payment": {
+      "handlers": [
+        {
+          "config": {
+            "complete_url": "https://stablestudio.dev/api/generate/gpt-image-2/edit",
+            "method": "POST",
+            "body": {
+              "prompt": "..."
+            }
+          }
+        }
+      ]
+    }
+  }
+}
+```
+
+## Routes
+
+| Endpoint                                 | Cost          | Time             |
+| ---------------------------------------- | ------------- | ---------------- |
+| `/api/generate/nano-banana/generate`     | $0.045–$0.151 | ~5s              |
+| `/api/generate/nano-banana/edit`         | $0.045–$0.151 | ~5s              |
+| `/api/generate/nano-banana-pro/generate` | $0.13–$0.24   | ~10s             |
+| `/api/generate/nano-banana-pro/edit`     | $0.13–$0.24   | ~10s             |
+| `/api/generate/gpt-image-2/generate`     | $0.005–$0.21  | can take minutes |
+| `/api/generate/gpt-image-2/edit`         | $0.005–$0.21  | can take minutes |
+| `/api/generate/gpt-image-1.5/generate`   | $0.009–$0.20  | ~3s              |
+| `/api/generate/gpt-image-1.5/edit`       | $0.009–$0.20  | ~3s              |
+| `/api/generate/flux-2-pro/generate`      | $0.02–$0.04   | ~5s              |
+| `/api/generate/flux-2-pro/edit`          | $0.03–$0.06   | ~5s              |
+| `/api/generate/flux-2-max/generate`      | $0.04–$0.17   | ~8s              |
+| `/api/generate/flux-2-max/edit`          | $0.04–$0.17   | ~8s              |
+| `/api/generate/grok/generate`            | $0.07         | ~3s              |
+| `/api/generate/grok/edit`                | $0.022        | ~3s              |
+| `/api/generate/grok-video/generate`      | $0.15–$0.75   | ~17s             |
+| `/api/generate/seedance/t2v`             | $0.09–$0.54/s | 1-3min           |
+| `/api/generate/seedance/i2v`             | $0.09–$0.54/s | 1-3min           |
+| `/api/generate/seedance-fast/t2v`        | $0.08–$0.17/s | 1-3min           |
+| `/api/generate/seedance-fast/i2v`        | $0.08–$0.17/s | 1-3min           |
+| `/api/generate/wan-2.6/t2v`              | $0.50–$2.25   | 2-5min           |
+| `/api/generate/wan-2.6/i2v`              | $0.50–$2.25   | 2-5min           |
+| `/api/generate/sora-2/generate`          | $0.40–$1.20   | 1-3min           |
+| `/api/generate/sora-2-pro/generate`      | $1.20–$6.00   | 2-5min           |
+| `/api/generate/veo-3.1/generate`         | $1.60–$3.20   | 1-2min           |
+| `/api/generate/veo-3.1-fast/generate`    | $1.00–$2.00   | ~30s             |
+| `/api/upload`                            | $0.01         | instant          |
+
+### Convert
+
+Use these endpoints when the user has an existing image and asks to convert it to SVG.
+
+| Endpoint                                | Cost  | Time |
+| --------------------------------------- | ----- | ---- |
+| `/api/generate/arrow-1.1/vectorize`     | $0.15 | ~30s |
+| `/api/generate/arrow-1.1-max/vectorize` | $0.20 | ~60s |
+
+Canonical OpenAPI spec: `GET /openapi.json`.
+
+## Input Schemas
+
+Media fields (`images`, `image`, `urls`, `input_reference`, `referenceImages`, etc.) accept any publicly reachable HTTPS URL — your own hosting, Vercel Blob, StableUpload, S3, or anywhere else on the web. No upload to StableStudio is required. Images must be jpeg/png/gif/webp and at most 10MB; every URL is verified reachable with the right content type before you are charged. If your file only exists locally, the [File Upload](#file-upload) flow ($0.01) gives you a hosted URL.
+
+**nano-banana generate** (Gemini 3.1 Flash):
+
+```json
+{
+  "prompt": "string",
+  "aspectRatio": "1:1|1:4|1:8|2:3|3:2|3:4|4:1|4:3|4:5|5:4|8:1|9:16|16:9|21:9",
+  "imageSize": "512|1K|2K|4K",
+  "thinkingLevel": "minimal|high"
+}
+```
+
+**nano-banana edit** (1–14 reference images):
+
+```json
+{
+  "prompt": "string",
+  "aspectRatio": "...same as generate",
+  "imageSize": "512|1K|2K|4K",
+  "thinkingLevel": "minimal|high",
+  "images": ["https://image-url..."]
+}
+```
+
+**nano-banana-pro generate:**
+
+```json
+{
+  "prompt": "string",
+  "aspectRatio": "1:1|2:3|3:2|3:4|4:3|4:5|5:4|9:16|16:9|21:9",
+  "imageSize": "1K|2K|4K"
+}
+```
+
+**nano-banana-pro edit** (1–14 reference images):
+
+```json
+{
+  "prompt": "string",
+  "aspectRatio": "...same as generate",
+  "imageSize": "1K|2K|4K",
+  "images": ["https://image-url..."]
+}
+```
+
+**gpt-image-2 generate:**
+
+```json
+{
+  "prompt": "string",
+  "quality": "low|medium|high",
+  "size": "1024x1024|1536x1024|1024x1536|auto",
+  "background": "opaque|auto",
+  "output_format": "png|jpeg|webp",
+  "moderation": "low|auto"
+}
+```
+
+**gpt-image-2 edit** (adds `images`):
+
+```json
+{
+  "prompt": "string",
+  "quality": "low|medium|high",
+  "size": "1024x1024|1536x1024|1024x1536|auto",
+  "background": "opaque|auto",
+  "output_format": "png|jpeg|webp",
+  "moderation": "low|auto",
+  "images": ["https://image-url..."]
+}
+```
+
+**gpt-image-1.5 generate:**
+
+```json
+{
+  "prompt": "string",
+  "quality": "low|medium|high",
+  "size": "1024x1024|1536x1024|1024x1536|auto",
+  "background": "transparent|opaque|auto",
+  "output_format": "png|jpeg|webp",
+  "moderation": "low|auto"
+}
+```
+
+**gpt-image-1.5 edit** (adds `input_fidelity`, `images`):
+
+```json
+{
+  "prompt": "string",
+  "quality": "low|medium|high",
+  "size": "1024x1024|1536x1024|1024x1536|auto",
+  "background": "transparent|opaque|auto",
+  "output_format": "png|jpeg|webp",
+  "moderation": "low|auto",
+  "input_fidelity": "high|low",
+  "images": ["https://image-url..."]
+}
+```
+
+**flux-2-pro generate:**
+
+```json
+{
+  "prompt": "string",
+  "aspect_ratio": "1:1|16:9|9:16|3:2|2:3|4:5|5:4|4:3|3:4",
+  "resolution": "0.5 MP|1 MP|2 MP",
+  "output_format": "webp|jpg|png",
+  "output_quality": 80,
+  "safety_tolerance": 2,
+  "prompt_upsampling": false
+}
+```
+
+**flux-2-pro edit** (1–8 reference images):
+
+```json
+{
+  "prompt": "string",
+  "aspect_ratio": "...same as generate",
+  "resolution": "0.5 MP|1 MP|2 MP",
+  "images": ["https://image-url..."]
+}
+```
+
+**flux-2-max generate** (up to 4 MP):
+
+```json
+{
+  "prompt": "string",
+  "aspect_ratio": "1:1|16:9|9:16|3:2|2:3|4:5|5:4|4:3|3:4",
+  "resolution": "0.5 MP|1 MP|2 MP|4 MP",
+  "output_format": "webp|jpg|png",
+  "output_quality": 80,
+  "safety_tolerance": 2,
+  "prompt_upsampling": false
+}
+```
+
+**flux-2-max edit** (1–10 reference images):
+
+```json
+{
+  "prompt": "string",
+  "aspect_ratio": "...same as generate",
+  "resolution": "0.5 MP|1 MP|2 MP|4 MP",
+  "images": ["https://image-url..."]
+}
+```
+
+**grok generate** (13 aspect ratios including ultra-wide):
+
+```json
+{
+  "prompt": "string",
+  "aspect_ratio": "1:1|16:9|9:16|4:3|3:4|3:2|2:3|2:1|1:2|19.5:9|9:19.5|20:9|9:20"
+}
+```
+
+**grok edit:**
+
+```json
+{
+  "prompt": "string",
+  "aspect_ratio": "...same as generate",
+  "images": ["https://image-url..."]
+}
+```
+
+**Image to SVG / Image to SVG Max** (convert an image URL to SVG):
+
+```json
+{
+  "image": "https://image-url...",
+  "target_size": 1024,
+  "auto_crop": false,
+  "max_output_tokens": 4096
+}
+```
+
+**grok-video generate** (single endpoint — pass `image` for image-to-video):
+
+```json
+{
+  "prompt": "string",
+  "duration": "3|6|9|12|15",
+  "resolution": "480p|720p",
+  "aspect_ratio": "1:1|16:9|9:16|4:3|3:4|3:2|2:3",
+  "image": "https://image-url..."
+}
+```
+
+**seedance / seedance-fast t2v** (Seedance 2 Pro/Fast happy path):
+
+```json
+{
+  "prompt": "string",
+  "duration": "5",
+  "aspectRatio": "16:9",
+  "outputResolution": "720p"
+}
+```
+
+Optional advanced fields: `resolution` (`720x720|720x960|960x720|1280x720|720x1280|1280x540`), `upscaleResolution: "4k"`, `callBackUrl`.
+
+**seedance / seedance-fast i2v** (first/last-frame keyframe):
+
+```json
+{
+  "prompt": "optional guidance",
+  "duration": "5",
+  "aspectRatio": "16:9",
+  "outputResolution": "720p",
+  "mode": "keyframe",
+  "urls": ["https://first-image...", "https://optional-last-image..."],
+  "urlMediaTypes": ["image", "image"]
+}
+```
+
+**seedance / seedance-fast i2v** (reference mode with images/video/audio):
+
+```json
+{
+  "prompt": "@image1 keeps the character identity while @video1 supplies the camera move, synced to @audio1",
+  "duration": "5",
+  "aspectRatio": "16:9",
+  "outputResolution": "720p",
+  "mode": "reference",
+  "urls": ["https://image-reference...", "https://video-reference..."],
+  "urlMediaTypes": ["image", "video"],
+  "audioUrls": ["https://audio-reference..."]
+}
+```
+
+Seedance `urlMediaTypes` must align 1:1 with `urls`: use `"image"` for images and `"video"` for videos. StableStudio verifies media types from each URL before charging and persists the verified `urlMediaTypes`, but callers should still include it so `@image1` and `@video1` references are unambiguous. In reference mode, `@imageN` counts image URLs only, `@videoN` counts video URLs only, and `@audioN` counts `audioUrls` only. Use one strong reference first, then add more control if needed; overloaded prompts with many references can conflict.
+
+For character references, a clean fashion-sketch reference can preserve identity cues with fewer visual artifacts than heavily stylized photo filters. Generate a sketch from the source photo first, upload that sketch, and use it as `@image1` in reference mode. A useful sketch prompt is: "Create a fashion sketch illustration of the person from the reference photo. Three views side by side: full body front, medium portrait, full body three-quarter. Style: loose expressive pencil lines with selective watercolor fill, cool grey-blue palette, white paper negative space. Skin in light pencil with minimal hatching; hair in sharp dark ink lines. Preserve facial features, hairstyle, clothing silhouette, and distinguishing features." Also describe the character in the Seedance prompt itself so the model has both visual and text anchors. For early drafts, use `seedance-fast`; for final quality, switch to `seedance`. Front-facing or three-quarter character references usually give the most consistent results.
+
+Seedance reference/prompt sources:
+
+- [WaveSpeed Seedance 2.0 Guide](https://wavespeed.ai/blog/posts/seedance-2-0-complete-guide-multimodal-video-creation/) — multimodal reference limits, @ mention syntax, and motion/audio use cases.
+- [Magic Hour Reference Guide](https://magichour.ai/blog/seedance-20-reference-guide) — identity, motion, audio sync, and common reference failure modes.
+- [SeaArt Best Prompts](https://www.seaart.ai/blog/seedance-2-0-prompt) — five-segment, CRAFT, and timeline prompt structures.
+
+Use `seedance-fast` for the default happy path. Use `seedance` for Pro quality, 1080p, or higher-fidelity output. `seedance-fast` supports 480p/720p. 4K is available through `upscaleResolution: "4k"` and is significantly more expensive.
+
+**wan-2.6 t2v:**
+
+```json
+{
+  "prompt": "string",
+  "duration": "5|10|15",
+  "size": "1280*720|720*1280|1920*1080|1080*1920",
+  "negativePrompt": "string",
+  "enablePromptExpansion": true,
+  "multiShots": false,
+  "audioUrl": "https://...",
+  "seed": 0
+}
+```
+
+Wan audio URLs must be HTTPS mp3 or wav files, 3-30 seconds long, and at most 15MB.
+
+**wan-2.6 i2v:**
+
+```json
+{
+  "prompt": "string",
+  "image": "https://image-url...",
+  "duration": "5|10|15",
+  "resolution": "720p|1080p",
+  "negativePrompt": "string",
+  "enablePromptExpansion": true,
+  "multiShots": false,
+  "audioUrl": "https://...",
+  "seed": 0
+}
+```
+
+Wan `multiShots` only has an effect when `enablePromptExpansion` is true.
+
+**sora-2 generate** (pass `input_reference` for image-to-video):
+
+```json
+{
+  "prompt": "string",
+  "seconds": "4|8|12",
+  "size": "1280x720|720x1280",
+  "input_reference": "https://image-url...",
+  "autoCrop": true
+}
+```
+
+**sora-2-pro generate** (same as sora-2, extra sizes):
+
+```json
+{
+  "prompt": "string",
+  "seconds": "4|8|12",
+  "size": "1280x720|720x1280|1792x1024|1024x1792",
+  "input_reference": "https://image-url...",
+  "autoCrop": true
+}
+```
+
+**veo-3.1 generate:**
+
+```json
+{
+  "prompt": "string",
+  "durationSeconds": "4|6|8",
+  "resolution": "720p|1080p",
+  "aspectRatio": "16:9|9:16",
+  "negativePrompt": "string",
+  "imageMode": "none|first-frame|reference|interpolation",
+  "image": "https://first-frame-image-url...",
+  "lastFrame": "https://last-frame-image-url...",
+  "referenceImages": ["https://image-url..."]
+}
+```
+
+**veo-3.1-fast generate:**
+
+```json
+{
+  "prompt": "string",
+  "durationSeconds": "4|6|8",
+  "resolution": "720p|1080p",
+  "aspectRatio": "16:9|9:16",
+  "imageMode": "none|first-frame|reference|interpolation",
+  "image": "https://first-frame-image-url...",
+  "lastFrame": "https://last-frame-image-url...",
+  "referenceImages": ["https://image-url..."]
+}
+```
+
+Veo 3.1 Fast does not support `negativePrompt`; omit it or use `veo-3.1`.
+
+Veo modes: omit `image`/`lastFrame`/`referenceImages` for pure text-to-video; pass `image` alone for image-to-video (first frame); pass `image` + `lastFrame` with `imageMode: "interpolation"` to animate between frames; pass up to 3 `referenceImages` with `imageMode: "reference"` for style guidance.
+
+## File Upload
+
+Optional — media URLs in generate/edit requests can come from anywhere on the public web. Use this flow only when your file exists locally and you need a hosted URL. Three-step flow:
+
+**Step 1: Get upload token** (payment, $0.01)
+
+```
+POST /api/upload
+PAYMENT-SIGNATURE: <signed payment>
+Content-Type: application/json
+
+{"filename": "reference.mp4", "contentType": "video/mp4"}
+```
+
+Returns:
+
+```json
+{
+  "uploadId": "uuid",
+  "clientToken": "vercel_blob_...",
+  "pathname": "uploads/uuid/image.png",
+  "expiresAt": "..."
+}
+```
+
+**Step 2: Upload file directly to Vercel Blob**
+
+```bash
+curl -X PUT "https://vercel.com/api/blob/?pathname=uploads/uuid/image.png" \
+  -H "authorization: Bearer $clientToken" \
+  -H "x-content-type: image/png" \
+  -H "x-api-version: 11" \
+  --data-binary @image.png
+```
+
+Returns `{"url": "https://....blob.vercel-storage.com/..."}`.
+
+**Step 3: Confirm upload** (SIGN-IN-WITH-X auth, no payment)
+
+```
+POST /api/upload/confirm
+SIGN-IN-WITH-X: <base64>
+Content-Type: application/json
+
+{"uploadId": "uuid", "blobUrl": "https://....blob.vercel-storage.com/..."}
+```
+
+Returns `{"success": true, "upload": {"id": "...", "blobUrl": "..."}}`.
+
+Use the returned `blobUrl` like any other media URL in edit/i2v requests.
+
+## Job Polling (SIGN-IN-WITH-X)
+
+Job routes require wallet signature authentication (no payment):
+
+```
+GET /api/jobs/{jobId}
+SIGN-IN-WITH-X: <base64>
+```
+
+Header contains base64-encoded CAIP-122 message:
+
+```json
+{
+  "domain": "stablestudio.dev",
+  "address": "0x...",
+  "uri": "https://stablestudio.dev/api/jobs/{jobId}",
+  "version": "1",
+  "chainId": "eip155:8453",
+  "nonce": "<random>",
+  "issuedAt": "<ISO8601>",
+  "expirationTime": "<ISO8601>",
+  "signature": "0x..."
+}
+```
+
+If auth missing/invalid, returns 402 with SIWX extension:
+
+```json
+{
+  "x402Version": 2,
+  "accepts": [],
+  "extensions": {
+    "sign-in-with-x": {
+      "info": {
+        "domain": "stablestudio.dev",
+        "uri": "https://stablestudio.dev/api/jobs/{jobId}",
+        "version": "1",
+        "nonce": "<server-generated>",
+        "issuedAt": "<ISO8601>",
+        "expirationTime": "<ISO8601>"
+      },
+      "supportedChains": [{ "chainId": "eip155:8453", "type": "eip191" }],
+      "schema": { "...": "..." }
+    }
+  }
+}
+```
+
+**Routes:**
+
+- `GET /api/jobs/{jobId}` — Get job status
+- `GET /api/jobs` — List jobs (`?limit=20&status=complete`)
+- `DELETE /api/jobs/{jobId}` — Delete failed job
+
+**Response:**
+
+```json
+{ "status": "complete", "result": { "imageUrl": "https://..." } }
+```
+
+Videos return `{videoUrl, thumbnailUrl}`. Returned URLs expire after roughly 20 minutes — download the asset immediately once the job completes.
+
+**Do not resubmit a generation while its job is `pending` or `loading`.** Normal generation can take several minutes, especially GPT Image and video models. Keep polling the original `jobId`; duplicate submissions create duplicate paid jobs.
+
+**Polling intervals:**
+
+| Model family                   | Poll every |
+| ------------------------------ | ---------- |
+| Most image models              | 5s         |
+| `gpt-image-2.5-sunburst`, `gpt-image-2.5-flare`, `gpt-image-2`, `gpt-image-1.5` | 10s        |
+| Video models                   | 15s        |

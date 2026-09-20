@@ -1,0 +1,9 @@
+{
+  "discoveryVersion": "0.1",
+  "apis": [
+    {
+      "id": "stableupload",
+      "url": "https://stableupload.dev/discovery/releases/example-2026-09-19/openapi.json"
+    }
+  ]
+}

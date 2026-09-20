@@ -1,0 +1,26 @@
+[
+  {
+    "service": "stabletravel",
+    "source": "https://stabletravel.dev/openapi.json",
+    "captured": "2026-09-19",
+    "sha256": "a5ae98a2893559d5558ead5c6a9b6779f8a5bd5b4fd918bb0eb9897274fcf726",
+    "sourceOperations": 45,
+    "exampleOperations": 3
+  },
+  {
+    "service": "stablestudio",
+    "source": "https://stablestudio.dev/openapi.json",
+    "captured": "2026-09-19",
+    "sha256": "71a12059cc735da72f573ceba8d6b98abecc82f87d26aef71cd4c658eb971627",
+    "sourceOperations": 36,
+    "exampleOperations": 2
+  },
+  {
+    "service": "stableupload",
+    "source": "https://stableupload.dev/openapi.json",
+    "captured": "2026-09-19",
+    "sha256": "6dbfd0f7d8a369bfbcaa3e1deb309dd1f08c60227aaf201112c543e25193be74",
+    "sourceOperations": 11,
+    "exampleOperations": 6
+  }
+]

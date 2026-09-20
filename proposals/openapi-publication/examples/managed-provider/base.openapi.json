@@ -1,0 +1,668 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "StableTravel proposed publication example",
+    "description": "Pay-per-request access to flight prices and booking links (Google Flights via SerpAPI), award availability (Seats.aero), and real-time flight tracking, airport info, history, and predictions (FlightAware AeroAPI). No auth, no subscriptions.",
+    "version": "example-2026-09-19",
+    "contact": {
+      "name": "Merit Systems",
+      "url": "https://stabletravel.dev",
+      "email": "support@merit.systems",
+      "x-agentcash-owner": "merit_systems"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://stabletravel.dev"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Flightaware"
+    },
+    {
+      "name": "Google Flights"
+    },
+    {
+      "name": "Seats Aero"
+    }
+  ],
+  "paths": {
+    "/api/google-flights/search": {
+      "get": {
+        "operationId": "google-flights_search",
+        "summary": "Search Google Flights for flight offers. Returns best flights, other flights, price insights, and airport info.",
+        "tags": [
+          "Google Flights"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "departure_id",
+            "schema": {
+              "type": "string",
+              "description": "Departure airport code (IATA), city, or kgmid. Comma-separated for multi-city."
+            },
+            "required": true,
+            "description": "Departure airport code (IATA), city, or kgmid. Comma-separated for multi-city."
+          },
+          {
+            "in": "query",
+            "name": "arrival_id",
+            "schema": {
+              "type": "string",
+              "description": "Arrival airport code (IATA), city, or kgmid. Comma-separated for multi-city."
+            },
+            "required": true,
+            "description": "Arrival airport code (IATA), city, or kgmid. Comma-separated for multi-city."
+          },
+          {
+            "in": "query",
+            "name": "outbound_date",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+              "description": "Departure date"
+            },
+            "required": true,
+            "description": "Departure date"
+          },
+          {
+            "in": "query",
+            "name": "return_date",
+            "schema": {
+              "description": "Return date (required for round trip)",
+              "type": "string",
+              "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+            },
+            "description": "Return date (required for round trip)"
+          },
+          {
+            "in": "query",
+            "name": "type",
+            "schema": {
+              "default": "1",
+              "description": "1 = Round trip, 2 = One way, 3 = Multi-city",
+              "type": "string",
+              "enum": [
+                "1",
+                "2",
+                "3"
+              ]
+            },
+            "description": "1 = Round trip, 2 = One way, 3 = Multi-city"
+          },
+          {
+            "in": "query",
+            "name": "travel_class",
+            "schema": {
+              "description": "1 = Economy, 2 = Premium economy, 3 = Business, 4 = First",
+              "type": "string",
+              "enum": [
+                "1",
+                "2",
+                "3",
+                "4"
+              ]
+            },
+            "description": "1 = Economy, 2 = Premium economy, 3 = Business, 4 = First"
+          },
+          {
+            "in": "query",
+            "name": "adults",
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9
+            }
+          },
+          {
+            "in": "query",
+            "name": "children",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            }
+          },
+          {
+            "in": "query",
+            "name": "infants_in_seat",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            }
+          },
+          {
+            "in": "query",
+            "name": "infants_on_lap",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9
+            }
+          },
+          {
+            "in": "query",
+            "name": "stops",
+            "schema": {
+              "description": "0 = Any, 1 = Nonstop only, 2 = Up to 1 stop, 3 = Up to 2 stops",
+              "type": "string",
+              "enum": [
+                "0",
+                "1",
+                "2",
+                "3"
+              ]
+            },
+            "description": "0 = Any, 1 = Nonstop only, 2 = Up to 1 stop, 3 = Up to 2 stops"
+          },
+          {
+            "in": "query",
+            "name": "max_price",
+            "schema": {
+              "description": "Max price in local currency",
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "description": "Max price in local currency"
+          },
+          {
+            "in": "query",
+            "name": "exclude_airlines",
+            "schema": {
+              "description": "Comma-separated airline codes to exclude",
+              "type": "string"
+            },
+            "description": "Comma-separated airline codes to exclude"
+          },
+          {
+            "in": "query",
+            "name": "include_airlines",
+            "schema": {
+              "description": "Comma-separated airline codes to include",
+              "type": "string"
+            },
+            "description": "Comma-separated airline codes to include"
+          },
+          {
+            "in": "query",
+            "name": "currency",
+            "schema": {
+              "default": "USD",
+              "description": "Currency code",
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 3
+            },
+            "description": "Currency code"
+          },
+          {
+            "in": "query",
+            "name": "hl",
+            "schema": {
+              "default": "en",
+              "description": "Language code",
+              "type": "string"
+            },
+            "description": "Language code"
+          },
+          {
+            "in": "query",
+            "name": "gl",
+            "schema": {
+              "description": "Country code for localization",
+              "type": "string"
+            },
+            "description": "Country code for localization"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "search_metadata": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "status": {
+                          "type": "string"
+                        },
+                        "json_endpoint": {
+                          "type": "string"
+                        },
+                        "created_at": {
+                          "type": "string"
+                        },
+                        "processed_at": {
+                          "type": "string"
+                        },
+                        "google_flights_url": {
+                          "type": "string"
+                        },
+                        "total_time_taken": {
+                          "type": "number"
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "search_parameters": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "best_flights": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "flights": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "departure_airport": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "time": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "arrival_airport": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "time": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "duration": {
+                                  "type": "number"
+                                },
+                                "airplane": {
+                                  "type": "string"
+                                },
+                                "airline": {
+                                  "type": "string"
+                                },
+                                "airline_logo": {
+                                  "type": "string"
+                                },
+                                "travel_class": {
+                                  "type": "string"
+                                },
+                                "flight_number": {
+                                  "type": "string"
+                                },
+                                "legroom": {
+                                  "type": "string"
+                                },
+                                "extensions": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "often_delayed_by_over_30_min": {
+                                  "type": "boolean"
+                                },
+                                "overnight": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "layovers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "duration": {
+                                  "type": "number"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "overnight": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "total_duration": {
+                            "type": "number"
+                          },
+                          "carbon_emissions": {
+                            "type": "object",
+                            "properties": {
+                              "this_flight": {
+                                "type": "number"
+                              },
+                              "typical_for_this_route": {
+                                "type": "number"
+                              },
+                              "difference_percent": {
+                                "type": "number"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "airline_logo": {
+                            "type": "string"
+                          },
+                          "departure_token": {
+                            "type": "string"
+                          },
+                          "extensions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "other_flights": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "flights": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "departure_airport": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "time": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "arrival_airport": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "time": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "duration": {
+                                  "type": "number"
+                                },
+                                "airplane": {
+                                  "type": "string"
+                                },
+                                "airline": {
+                                  "type": "string"
+                                },
+                                "airline_logo": {
+                                  "type": "string"
+                                },
+                                "travel_class": {
+                                  "type": "string"
+                                },
+                                "flight_number": {
+                                  "type": "string"
+                                },
+                                "legroom": {
+                                  "type": "string"
+                                },
+                                "extensions": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "often_delayed_by_over_30_min": {
+                                  "type": "boolean"
+                                },
+                                "overnight": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "layovers": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "duration": {
+                                  "type": "number"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "id": {
+                                  "type": "string"
+                                },
+                                "overnight": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "total_duration": {
+                            "type": "number"
+                          },
+                          "carbon_emissions": {
+                            "type": "object",
+                            "properties": {
+                              "this_flight": {
+                                "type": "number"
+                              },
+                              "typical_for_this_route": {
+                                "type": "number"
+                              },
+                              "difference_percent": {
+                                "type": "number"
+                              }
+                            },
+                            "additionalProperties": false
+                          },
+                          "price": {
+                            "type": "number"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "airline_logo": {
+                            "type": "string"
+                          },
+                          "departure_token": {
+                            "type": "string"
+                          },
+                          "extensions": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    },
+                    "price_insights": {
+                      "type": "object",
+                      "properties": {
+                        "lowest_price": {
+                          "type": "number"
+                        },
+                        "price_level": {
+                          "type": "string"
+                        },
+                        "typical_price_range": {
+                          "type": "array",
+                          "items": {
+                            "type": "number"
+                          }
+                        },
+                        "price_history": {
+                          "type": "array",
+                          "items": {
+                            "type": "array",
+                            "items": {
+                              "type": "number"
+                            }
+                          }
+                        }
+                      },
+                      "additionalProperties": false
+                    },
+                    "airports": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "departure": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "airport": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "time": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "city": {
+                                  "type": "string"
+                                },
+                                "country": {
+                                  "type": "string"
+                                },
+                                "country_code": {
+                                  "type": "string"
+                                },
+                                "image": {
+                                  "type": "string"
+                                },
+                                "thumbnail": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "arrival": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "airport": {
+                                  "type": "object",
+                                  "properties": {
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "time": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "additionalProperties": false
+                                },
+                                "city": {
+                                  "type": "string"
+                                },
+                                "country": {
+                                  "type": "string"
+                                },
+                                "country_code": {
+                                  "type": "string"
+                                },
+                                "image": {
+                                  "type": "string"
+                                },
+                                "thumbnail": {
+                                  "type": "string"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+# StableUpload API
+
+Pay-per-upload file and static site hosting. No API keys. Paid endpoints use x402/MPP; owner actions use SIWX wallet auth.
+
+## Choose The Tier
+
+Default to 6-month tiers for user-visible or reusable links:
+
+- `10mb` $0.02, `100mb` $0.20, `1gb` $2.00
+
+Use 7-day short-term tiers only when the caller explicitly needs a temporary workflow link, intermediate asset, generated output, or downstream handoff URL:
+
+- `short-10mb` $0.005, `short-100mb` $0.02, `short-1gb` $0.10, `short-5gb` $0.50
+
+Do not use `short-*` for anything a user expects to keep. `short-5gb` is for file uploads only, not static sites.
+
+## Upload Instructions
+
+Purchase responses include `uploadMethod`, `uploadUrl`, `uploadUrlExpiresAt`, and `curlExample`.
+
+- `put`: PUT raw bytes to `uploadUrl` with the requested `Content-Type`.
+- `post`: POST multipart form data to `postUrl` with every `postFields` entry plus `file=@path`. S3 enforces `Content-Type` and max size before storing bytes.
+
+`postUrl` and `postFields` appear only for `post`. Use `curlExample` when unsure.
+
+## File Flow
+
+1. `POST /api/upload` (paid): `{ "filename": "photo.png", "contentType": "image/png", "tier": "10mb" }`.
+2. Upload the file using the returned method.
+3. Use `publicUrl` until `expiresAt`.
+
+Optional `policyTtlSeconds` (60-86400) controls upload URL/form TTL. For a downstream service, buy a short-term slot with a longer TTL, pass `{ postUrl, postFields, publicUrl }`, and let the service upload to `postUrl`.
+
+## Site Flow
+
+1. `POST /api/site` (paid): `{ "filename": "site.zip", "tier": "100mb" }`.
+2. Upload the zip using the returned method.
+3. `POST /api/site/activate` (SIWX): `{ "uploadId": "..." }`.
+4. Serve `siteUrl`, usually `https://{uploadId}.s.stableupload.dev/`.
+
+Site purchase responses do not include `publicUrl`. They return an upload target for the source zip; the usable site URL comes only from `POST /api/site/activate`.
+
+`POST /api/site/activate` runs once per uploaded zip. If the site is already active, calling activate again without a newly uploaded zip returns an error instead of reusing old content.
+
+To update a site, call `PUT /api/site` (SIWX) with `{ "uploadId": "..." }`, upload the replacement zip to the returned target, then call `POST /api/site/activate` again. Do not skip the replacement zip upload.
+
+For sites, tier size is the uncompressed extracted total; max 500 files. Renew with `POST /api/site/renew` (paid): `{ "uploadId": "...", "tier": "100mb", "count": 4 }`. Price is tier price x count. The tier must match the original tier.
+
+## Listing And Metadata
+
+`GET /api/uploads?limit=50` (SIWX) lists newest uploads first. If `nextCursor` is present, pass it as `?cursor=...` to fetch the next page. Items include `kind` (`file` or `site`) and `isSite`; sites also include `siteUrl` after activation, plus `fileCount` and `customHostname` when available.
+
+`GET /api/download/:uploadId` (SIWX) returns metadata only. It does not stream or proxy file bytes. To read file bytes, fetch the returned `publicUrl`; to serve a site, use `siteUrl`.
+
+Statuses are lifecycle hints:
+
+- `pending`: slot exists; upload may not have happened yet. Sites remain pending until `POST /api/site/activate` extracts the zip.
+- `uploaded`: file was verified by cleanup, or a site was activated.
+- `expired`: object/site is no longer usable and may have been deleted.
+
+A successful file POST/PUT can still show `pending` briefly. A successful site zip upload must be followed by `POST /api/site/activate`.
+
+## Custom Domains
+
+DNS-first is fastest: activate the site, call `GET /api/site/domain/preview?hostname=blog.example.com`, create both returned CNAMEs, then `POST /api/site/domain` (SIWX). Poll `GET /api/site/domain/status?uploadId=...` until `ssl` is `active`. Hostnames must be subdomains, not apex domains.
+
+## Notes
+
+- Public URLs work until `expiresAt`.
+- Upload URLs/forms work until `uploadUrlExpiresAt`.
+- `GET /api/uploads` and `GET /api/download/:uploadId` inspect wallet-owned upload metadata.
