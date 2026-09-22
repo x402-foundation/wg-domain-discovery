@@ -1,0 +1,34 @@
+{
+  "captured": "2026-09-21",
+  "operationHashEncoding": "SHA-256 of UTF-8 JSON, sorted keys, separators comma/colon, default ensure_ascii=True",
+  "sources": {
+    "stabletravel": {
+      "url": "https://stabletravel.dev/openapi.json",
+      "documentSha256": "a5ae98a2893559d5558ead5c6a9b6779f8a5bd5b4fd918bb0eb9897274fcf726",
+      "operations": {
+        "/api/seats-aero/routes": {
+          "get": "978b6c0b889be71955d919e698995fa8b4df9534350b0fd78bda3ceb4b684ad6"
+        }
+      }
+    },
+    "stablestudio": {
+      "url": "https://stablestudio.dev/openapi.json",
+      "documentSha256": "8b2d10a6959ec03efa444f86bbd724f075784161ca00cac34ec5259f4ca7d57c",
+      "operations": {
+        "/api/generate/nano-banana-pro/generate": {
+          "post": "29e06177dd88f2e38a0c0c5bff0f17dcad3e4a8e94e955d5c54b10ca631d8bed"
+        },
+        "/api/jobs/{jobId}": {
+          "get": "559f0c7c3623769b44bf5b10b60bc97461c19d2d2f879eb72ba6357f68c30a35"
+        }
+      }
+    }
+  },
+  "challenge": {
+    "url": "https://stabletravel.dev/api/seats-aero/routes?source=united",
+    "httpStatus": 402,
+    "header": "PAYMENT-REQUIRED",
+    "scope": "Base option and resource retained; Solana option and Bazaar schema omitted. outputExample copied from Bazaar; not a purchased data response.",
+    "paymentMade": false
+  }
+}

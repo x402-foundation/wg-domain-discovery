@@ -1,0 +1,61 @@
+{
+  "price-omitted": {
+    "x402Version": 2
+  },
+  "payment-schemes": {
+    "x402Version": 2,
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:8453"
+      },
+      {
+        "scheme": "upto",
+        "network": "eip155:8453"
+      },
+      {
+        "scheme": "batch-settlement",
+        "network": "eip155:8453"
+      }
+    ]
+  },
+  "siwx-with-payment": {
+    "x402Version": 2,
+    "accepts": [
+      {
+        "scheme": "exact",
+        "network": "eip155:8453"
+      }
+    ],
+    "extensions": [
+      "sign-in-with-x"
+    ]
+  },
+  "siwx-authentication-only": {
+    "x402Version": 2,
+    "extensions": [
+      "sign-in-with-x"
+    ]
+  },
+  "stealth-recipient": {
+    "x402Version": 2,
+    "accepts": [
+      {
+        "scheme": "mechanism-defined-scheme",
+        "network": "eip155:8453",
+        "payToType": "stealth"
+      }
+    ]
+  },
+  "role-recipient": {
+    "x402Version": 2,
+    "accepts": [
+      {
+        "scheme": "mechanism-defined-scheme",
+        "network": "eip155:8453",
+        "payTo": "mechanism-defined-role",
+        "payToType": "role"
+      }
+    ]
+  }
+}
