@@ -1,0 +1,38 @@
+{
+  "overlay": "1.1.0",
+  "info": {
+    "title": "Proposed StableTravel discovery annotations",
+    "version": "2026-09-21"
+  },
+  "actions": [
+    {
+      "target": "$['paths']['/api/seats-aero/routes']['get']",
+      "update": {
+        "description": "List airline flight route pairs covered by a Seats.aero mileage program source. These are origin/destination airport pairs, not API routes. Charged per request.",
+        "x-x402": {
+          "accepts": [
+            {
+              "scheme": "exact",
+              "network": "eip155:8453",
+              "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+              "minAmount": "10000",
+              "maxAmount": "10000"
+            }
+          ]
+        },
+        "responses": {
+          "402": {
+            "headers": {
+              "PAYMENT-REQUIRED": {
+                "description": "Base64-encoded x402 v2 PaymentRequired object. Obtain fresh request-specific terms before payment.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

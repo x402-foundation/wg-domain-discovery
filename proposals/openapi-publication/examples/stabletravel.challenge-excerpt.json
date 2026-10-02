@@ -1,0 +1,39 @@
+{
+  "x402Version": 2,
+  "resource": {
+    "url": "https://stabletravel.dev/api/seats-aero/routes?source=united",
+    "method": "GET",
+    "description": "List airline flight route pairs covered by a Seats.aero mileage program source. These are origin/destination airport pairs, not API routes.",
+    "mimeType": "application/json",
+    "tags": [
+      "Seats Aero"
+    ],
+    "serviceName": "StableTravel"
+  },
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "10000",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "payTo": "0xDd257723b86B4947483905cdAcBbBC70fACF2ec0",
+      "maxTimeoutSeconds": 300,
+      "extra": {
+        "name": "USD Coin",
+        "version": "2"
+      }
+    }
+  ],
+  "outputExample": [
+    {
+      "ID": "route_123",
+      "Source": "united",
+      "OriginAirport": "SFO",
+      "DestinationAirport": "FRA",
+      "OriginRegion": "North America",
+      "DestinationRegion": "Europe",
+      "Distance": 5685,
+      "NumDaysOut": 365
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "x402Version": 2,
+  "resource": {
+    "url": "https://stablestudio.dev/api/generate/nano-banana-pro/generate",
+    "method": "POST",
+    "description": "generate with Nano Banana Pro Returns an async job with a pollUrl. Poll the returned pollUrl with SIWX until the job is complete or failed.",
+    "mimeType": "application/json",
+    "tags": [
+      "Generate"
+    ],
+    "serviceName": "StableStudio"
+  },
+  "accepts": [
+    {
+      "scheme": "exact",
+      "network": "eip155:8453",
+      "amount": "130000",
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "payTo": "0x07F067959297767c887dbfA3C72379c66E82a045",
+      "maxTimeoutSeconds": 300,
+      "extra": {
+        "name": "USD Coin",
+        "version": "2"
+      }
+    },
+    {
+      "scheme": "exact",
+      "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+      "amount": "130000",
+      "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+      "payTo": "HqpEDUY3kV423fSAv7iaY3cQiz8qN8qEuGqLsG4s6h2c",
+      "maxTimeoutSeconds": 300,
+      "extra": {
+        "feePayer": "CjNFTjvBhbJJd2B5ePPMHRLx1ELZpa8dwQgGL727eKww",
+        "recentBlockhash": "osmbte271YsgrZNVpzybhtxa5vkEJmKqJ5cXi2JUstJ",
+        "lastValidBlockHeight": "430352420"
+      }
+    }
+  ]
+}

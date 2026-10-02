@@ -15,3 +15,7 @@ A schedule of public meetings can be found and the links to join can be found [h
 
 - Public Slack: [#wg-domain-discovery](https://x402workspace.slack.com/archives/C0B9Z8C27EE)
 - Mailing List: [Domain-Discovery@lists.x402.org](mailto:Domain-Discovery@lists.x402.org), Subscribe at [https://lists.x402.org/g/domain-discovery](https://lists.x402.org/g/domain-discovery)
+
+## Proposals
+
+- [Domain discovery through OpenAPI](proposals/openapi-publication/proposal.md): a `/.well-known/x402` entry linking to OpenAPI descriptions with operation-level `x-x402` annotations. See [example sources and verification](proposals/openapi-publication/examples/README.md).
