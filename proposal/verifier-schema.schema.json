@@ -1,0 +1,85 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Verifier verdict object",
+  "type": "object",
+  "required": ["verdict", "reason", "evidence", "observed_at", "checked_at", "untested", "accepts_index"],
+  "properties": {
+    "verdict": { "type": "string", "enum": ["true", "false", "inconclusive"] },
+    "reason": {
+      "type": "string",
+      "enum": [
+        "settled-under-terms", "probe-ok", "no-domain", "wrong-domain",
+        "mapping-unknown", "mapping-stale", "terms-mismatch",
+        "probe-unreachable", "no-challenge", "digest-unbound", "self-referential"
+      ]
+    },
+    "evidence": { "type": "string", "enum": ["none", "terms", "probe", "purchase"] },
+    "detail": {
+      "type": "object",
+      "description": "Companion to reason for codes that reference a specific mismatched field. field is always required when detail is present.",
+      "properties": {
+        "field": { "type": "string" },
+        "expected": { "type": "string" },
+        "got": { "type": "string" }
+      },
+      "required": ["field"]
+    },
+    "accepts_index": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Index into the challenge's accepts array that this verdict, digest, and mapping apply to. Always present; a single-accept challenge carries 0."
+    },
+    "attestation": {
+      "type": "object",
+      "description": "A signed record making the independence claim below checkable. subject names the two identities being compared; a client discounts the attestation if verifier_domain is not distinct from resource_domain, or if key_url/record_url do not resolve under verifier_domain.",
+      "properties": {
+        "key_url": { "type": "string", "format": "uri", "description": "Where the verifier publishes its signing key, under verifier_domain." },
+        "record_url": { "type": "string", "format": "uri", "description": "The specific signed record for this verdict, under verifier_domain." },
+        "subject": {
+          "type": "object",
+          "required": ["resource_domain", "verifier_domain"],
+          "properties": {
+            "resource_domain": { "type": "string" },
+            "verifier_domain": { "type": "string" }
+          }
+        },
+        "valid_until": { "type": "string", "format": "date-time" }
+      },
+      "required": ["key_url", "record_url", "subject", "valid_until"]
+    },
+    "observed_at": { "type": "string", "format": "date-time" },
+    "checked_at": { "type": "string", "format": "date-time" },
+    "untested": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["terms", "probe", "purchase"] }
+    },
+    "digest": {
+      "type": "object",
+      "required": ["scheme", "network", "asset", "payTo", "amount", "extra"],
+      "properties": {
+        "scheme": { "type": "string" },
+        "network": { "type": "string" },
+        "asset": { "type": "string" },
+        "payTo": { "type": "string" },
+        "amount": { "type": "string" },
+        "extra": { "type": "object" }
+      }
+    },
+    "mapping": {
+      "type": "object",
+      "properties": {
+        "entry": { "type": "string" },
+        "contract": { "type": "string" },
+        "read_at": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "reason": { "enum": ["wrong-domain", "terms-mismatch", "mapping-unknown", "mapping-stale"] } }
+      },
+      "then": { "required": ["detail"] }
+    }
+  ]
+}
