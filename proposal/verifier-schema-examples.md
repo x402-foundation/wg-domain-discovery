@@ -46,3 +46,39 @@ Reads the live 402 and decodes payTo/chain/asset off the challenge itself, biase
 - observed_at ← timestamp of the strongest check that ran; checked_at ← timestamp of this call regardless of level reached
 - digest ← the decoded challenge fields
 - `attestation` ← `attest: true` issues a signed record under Paddock's own domain (paddock.finance), distinct from the checked resource's domain. `subject.resource_domain` is the seller's domain from the resolved challenge; `subject.verifier_domain` is paddock.finance; `key_url` and `record_url` resolve under paddock.finance; `valid_until` bounds the attestation's freshness.
+
+## 4. Relayed purchase, relationship disclosed, method pinned
+
+A verifier at `verifier.example.org` did not buy the resource itself. It holds a paid-call record signed by a source at `checker.example.net`, whose key is served from that same domain, so a client can check the record offline without calling either party. The verification was paid for by the client. The domains are placeholders and the digest is illustrative.
+
+```json
+{
+  "verdict": "true",
+  "reason": "settled-under-terms",
+  "evidence": "purchase",
+  "purchase_by": "relayed",
+  "purchase_source": {
+    "source_domain": "checker.example.net",
+    "record_url": "https://checker.example.net/records/7f3a",
+    "key_url": "https://checker.example.net/.well-known/checker-keys.json",
+    "key_id": "checker-2026-10"
+  },
+  "method_digest": "sha256:9870d2f640b01c84bee0722b1c1aa565c76af995205fb42a9695b30eb82f27e5",
+  "observed_at": "2026-10-20T09:00:00Z",
+  "checked_at": "2026-10-23T08:00:00Z",
+  "untested": [],
+  "accepts_index": 0,
+  "attestation": {
+    "key_url": "https://verifier.example.org/.well-known/jwks.json",
+    "record_url": "https://verifier.example.org/attestations/41",
+    "subject": {
+      "resource_domain": "seller.example.com",
+      "verifier_domain": "verifier.example.org"
+    },
+    "valid_until": "2026-10-30T08:00:00Z",
+    "relationship": ["paid-by-client"]
+  }
+}
+```
+
+Had the record been confirmable only by asking `checker.example.net`, or only against a key carried in the record itself, the same verifier would report `evidence: "probe"` (or `terms`), omit `purchase_by` and `purchase_source`, and list `purchase` in `untested`.
