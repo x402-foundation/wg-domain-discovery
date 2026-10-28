@@ -183,12 +183,26 @@
                 "required": ["network"],
                 "properties": {
                   "network": { "$ref": "#/definitions/caip2Network" },
-                  "chainId": { "type": "integer", "minimum": 1 },
+                  "chainId": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "deprecated": true,
+                    "description": "Deprecated: redundant with the eip155:<reference> component of network; retained only for transitional descriptors whose network matches ^eip155:[1-9][0-9]*$."
+                  },
                   "asset": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
                   "facilitator": {
                     "type": "string",
                     "format": "uri",
                     "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$"
+                  }
+                },
+                "dependencies": {
+                  "chainId": {
+                    "properties": {
+                      "network": {
+                        "pattern": "^eip155:[1-9][0-9]*$"
+                      }
+                    }
                   }
                 },
                 "additionalProperties": false

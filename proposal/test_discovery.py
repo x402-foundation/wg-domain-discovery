@@ -610,6 +610,8 @@ def run_tests():
         {"networks": ["base"]},
         {"networks": [{"network": "base", "chainId": 1}]},
         {"networks": [{"network": "EIP155:8453", "chainId": 8454}]},
+        {"networks": [{"network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", "chainId": 101}]},
+        {"networks": [{"network": "eip155:08453", "chainId": 8453}]},
     ]:
         bad_direct = {
             "x402Version": 2,
