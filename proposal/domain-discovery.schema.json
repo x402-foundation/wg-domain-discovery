@@ -29,6 +29,7 @@
     "facilitator": {
       "type": "string",
       "format": "uri",
+      "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$",
       "description": "Optional URI pointing to an external authoritative facilitator service."
     },
     "keys": {
@@ -54,13 +55,15 @@
       "oneOf": [
         {
           "type": "string",
-          "format": "uri"
+          "format": "uri",
+          "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$"
         },
         {
           "type": "array",
           "items": {
             "type": "string",
-            "format": "uri"
+            "format": "uri",
+            "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$"
           },
           "minItems": 1
         }
@@ -250,51 +253,55 @@
       "additionalProperties": false
     },
     "pointerResource": {
-      "description": "Pointer resource entry class: identifies a monetized endpoint by URL (and optional HTTP verb/description) where payment terms are discovered by fetching the live HTTP 402 challenge at the target URL.",
-      "oneOf": [
-        {
-          "type": "string",
-          "format": "uri",
-          "minLength": 1
-        },
-        {
-          "type": "object",
-          "required": [
-            "url"
-          ],
-          "properties": {
-            "x402Version": {
-              "$ref": "#/definitions/protocolVersion"
-            },
-            "url": {
-              "type": "string",
-              "format": "uri",
-              "minLength": 1,
-              "description": "Target URL of the monetized resource."
-            },
-            "method": {
-              "type": "string",
-              "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-              "description": "Single HTTP method applicable to the pointer resource."
-            },
-            "methods": {
-              "type": "array",
-              "items": {
-                "type": "string",
-                "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
-              },
-              "minItems": 1,
-              "uniqueItems": true,
-              "description": "HTTP methods applicable to the pointer resource."
-            },
-            "description": {
-              "type": "string",
-              "description": "Human and agent readable summary of the resource."
-            }
+      "description": "Pointer resource entry class: identifies a monetized endpoint by a directly dereferenceable RFC 3987 absolute HTTP(S) URI (and optional HTTP verb/description) where payment terms are discovered by fetching the live HTTP 402 challenge at the target URL. URI templates and method-prefixed strings are forbidden in pointer URIs.",
+      "type": ["string", "object"],
+      "if": {
+        "type": "string"
+      },
+      "then": {
+        "type": "string",
+        "format": "uri",
+        "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$",
+        "minLength": 1
+      },
+      "else": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "x402Version": {
+            "$ref": "#/definitions/protocolVersion"
           },
-          "additionalProperties": false
-        }
-      ]
+          "url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$",
+            "minLength": 1,
+            "description": "Directly dereferenceable RFC 3987 absolute HTTP(S) URI of the monetized resource (URI templates belong on selfContainedResource.path)."
+          },
+          "method": {
+            "type": "string",
+            "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+            "description": "Single HTTP method applicable to the pointer resource."
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"]
+            },
+            "minItems": 1,
+            "uniqueItems": true,
+            "description": "HTTP methods applicable to the pointer resource."
+          },
+          "description": {
+            "type": "string",
+            "description": "Human and agent readable summary of the resource."
+          }
+        },
+        "additionalProperties": false
+      }
     },
     "resourceEndpoint": {
       "description": "Discriminated union of the two conforming resource entry classes: selfContainedResource ({path, accepts}) when 'path' or 'accepts' is present, and pointerResource ({url, method?} or URI string) otherwise. Overlapping shapes (e.g. carrying both path and url) are deterministically rejected.",

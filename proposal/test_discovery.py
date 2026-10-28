@@ -114,6 +114,41 @@ def run_migration_check(validator):
           f"{relocated} legacy root key(s) relocated to extensions (section 8.3)")
     return len(v2_res)
 
+def build_strict_format_checker():
+    """Build a strict RFC 3987 absolute HTTP(S) URI FormatChecker without optional C/regex deps."""
+    checker = jsonschema.FormatChecker()
+    disallowed_chars = set(' \t\r\n{}<>"`|\\^[]')
+
+    @checker.checks("uri")
+    def is_strict_http_uri(instance):
+        if not isinstance(instance, str) or not instance:
+            return False
+        if any(ch in disallowed_chars for ch in instance):
+            return False
+        parsed = urllib.parse.urlsplit(instance)
+        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+
+    return checker
+
+def assert_uri_checker_capabilities(validator):
+    """Capability self-test: assert strict URI rejection before judging any manifest."""
+    must_reject_probes = [
+        "https://x/report/{agent_id}",
+        "POST https://x/y",
+        "/relative/path",
+        "not a uri"
+    ]
+    for bad_uri in must_reject_probes:
+        probe_doc = {"x402Version": 2, "resources": [bad_uri]}
+        errs = list(validator.iter_errors(probe_doc))
+        validators_hit = {e.validator for e in errs if list(e.path) == ["resources", 0]}
+        if "pattern" not in validators_hit or "format" not in validators_hit:
+            print(f"[-] FAIL: capability check failed on {bad_uri!r}; "
+                  f"expected both 'pattern' and 'format' rejection, got {validators_hit}")
+            sys.exit(1)
+    print(f"[PASS] capability self-check: validator rejects {len(must_reject_probes)} malformed URI probes "
+          "via both Draft-07 'pattern' and strict RFC 3987 'format: uri'")
+
 def run_tests():
     print("=" * 70)
     print("x402 DOMAIN DISCOVERY SCHEMA & CONFORMANCE TEST SUITE")
@@ -125,8 +160,10 @@ def run_tests():
         sys.exit(1)
 
     schema = load_json(SCHEMA_FILE)
-    validator = jsonschema.Draft7Validator(schema)
+    format_checker = build_strict_format_checker()
+    validator = jsonschema.Draft7Validator(schema, format_checker=format_checker)
     print(f"[+] Loaded schema: {SCHEMA_FILE.name}")
+    assert_uri_checker_capabilities(validator)
 
     # 2. Positive Conformance Tests
     positive_files = [
@@ -136,7 +173,8 @@ def run_tests():
         "service-with-openapi.well-known-x402.json",
         "bare-openapi.well-known-x402.json",
         "hybrid-facilitator.well-known-x402.json",
-        "forward-extensions.well-known-x402.json"
+        "forward-extensions.well-known-x402.json",
+        "pointer-only-no-root-version.well-known-x402.json"
     ]
 
     print("\n--- 1. POSITIVE CONFORMANCE TESTS (MUST PASS) ---")
@@ -162,12 +200,15 @@ def run_tests():
     negative_fixtures = [
         ("invalid-missing-version.json", "required", [], "missing required x402Version"),
         ("invalid-bad-version.json", "enum", ["x402Version"], "unsupported x402Version"),
+        ("invalid-version-conflict.json", "enum", ["resources", 0, "x402Version"], "entry x402Version conflicting with v2"),
         ("invalid-bad-caip2.json", "pattern", ["resources", 0, "accepts", 0, "network"], "malformed CAIP-2 network identifier"),
         ("invalid-caip2-reference-overflow.json", "pattern", ["resources", 0, "accepts", 0, "network"], "CAIP-2 network reference exceeding 32 characters"),
         ("invalid-negative-amount.json", "pattern", ["resources", 0, "accepts", 0, "amount"], "negative amount string"),
         ("invalid-empty-accepts.json", "minItems", ["resources", 0, "accepts"], "empty accepts array"),
         ("invalid-misplaced-carrier.json", "not", [], "misplaced carrier key at root"),
-        ("invalid-missing-kid.json", "required", ["keys", 0], "signing key missing required kid")
+        ("invalid-missing-kid.json", "required", ["keys", 0], "signing key missing required kid"),
+        ("invalid-method-in-string.json", "pattern", ["resources", 0], "HTTP method embedded inside bare pointer string"),
+        ("invalid-pointer-uri-template.json", "pattern", ["resources", 0, "url"], "unresolvable URI template in pointer url")
     ]
 
     print("\n--- 2. NEGATIVE EDGE FIXTURE TESTS (MUST REJECT ON SPECIFIC CONSTRAINT) ---")
@@ -232,6 +273,36 @@ def run_tests():
         print(f"[-] FAIL: pointer-only manifest without root x402Version rejected: {ptr_no_ver_errors[0].message}")
         sys.exit(1)
     print("[PASS] pointer-only manifest without root x402Version accepted (target 402 governs version)")
+
+    # Empty resources[] array without root x402Version is NOT vacuously exempted
+    empty_resources_no_version = {"resources": []}
+    empty_res_errors = list(validator.iter_errors(empty_resources_no_version))
+    if not any(e.validator == "required" and list(e.path) == [] and "'x402Version'" in e.message for e in empty_res_errors):
+        print("[-] FAIL: empty resources[] array without root x402Version was not rejected by 'required'")
+        sys.exit(1)
+    print("[PASS] empty resources[] array without root x402Version rejected (minItems: 1 required for pointer exemption)")
+
+    # Informational root summary relocated into extensions.settlement on a pointer manifest (§8.3.2)
+    pointer_with_relocated_summary = {
+        "kind": "resource-server",
+        "resources": [
+            {"url": "https://api.example.com/x402/gas", "method": "GET", "description": "Gas prices"},
+            {"url": "https://api.example.com/x402/quote", "methods": ["GET", "POST"]}
+        ],
+        "extensions": {
+            "settlement": {
+                "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                "networks": ["eip155:8453"],
+                "fee": "0.01 USDC",
+                "access": "x402"
+            }
+        }
+    }
+    relocated_summary_errors = list(validator.iter_errors(pointer_with_relocated_summary))
+    if relocated_summary_errors:
+        print(f"[-] FAIL: pointer manifest with extensions.settlement summary rejected: {relocated_summary_errors[0].message}")
+        sys.exit(1)
+    print("[PASS] pointer manifest with informational root summary relocated into extensions.settlement accepted (0 errors)")
 
     # All-inline manifest without root x402Version where every entry carries its own x402Version: 2
     inline_per_entry_versioned = {

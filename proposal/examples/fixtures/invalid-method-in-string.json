@@ -1,0 +1,6 @@
+{
+  "x402Version": 2,
+  "resources": [
+    "POST https://api.example.com/v1/search"
+  ]
+}
