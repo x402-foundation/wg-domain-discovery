@@ -136,7 +136,10 @@ def assert_uri_checker_capabilities(validator):
         "https://x/report/{agent_id}",
         "POST https://x/y",
         "/relative/path",
-        "not a uri"
+        "not a uri",
+        "https:///path",
+        "https://?q",
+        "https://#frag"
     ]
     for bad_uri in must_reject_probes:
         probe_doc = {"x402Version": 2, "resources": [bad_uri]}
@@ -208,7 +211,8 @@ def run_tests():
         ("invalid-misplaced-carrier.json", "not", [], "misplaced carrier key at root"),
         ("invalid-missing-kid.json", "required", ["keys", 0], "signing key missing required kid"),
         ("invalid-method-in-string.json", "pattern", ["resources", 0], "HTTP method embedded inside bare pointer string"),
-        ("invalid-pointer-uri-template.json", "pattern", ["resources", 0, "url"], "unresolvable URI template in pointer url")
+        ("invalid-pointer-uri-template.json", "pattern", ["resources", 0, "url"], "unresolvable URI template in pointer url"),
+        ("invalid-empty-authority.json", "pattern", ["resources", 0], "empty URI authority after scheme://")
     ]
 
     print("\n--- 2. NEGATIVE EDGE FIXTURE TESTS (MUST REJECT ON SPECIFIC CONSTRAINT) ---")

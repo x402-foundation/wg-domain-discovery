@@ -29,7 +29,7 @@
     "facilitator": {
       "type": "string",
       "format": "uri",
-      "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$",
+      "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$",
       "description": "Optional URI pointing to an external authoritative facilitator service."
     },
     "keys": {
@@ -56,14 +56,14 @@
         {
           "type": "string",
           "format": "uri",
-          "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$"
+          "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$"
         },
         {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$"
+            "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$"
           },
           "minItems": 1
         }
@@ -261,7 +261,7 @@
       "then": {
         "type": "string",
         "format": "uri",
-        "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$",
+        "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$",
         "minLength": 1
       },
       "else": {
@@ -276,7 +276,7 @@
           "url": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://[^\\s{}<>\"`|\\\\^\\[\\]]+$",
+            "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$",
             "minLength": 1,
             "description": "Directly dereferenceable RFC 3987 absolute HTTP(S) URI of the monetized resource (URI templates belong on selfContainedResource.path)."
           },
