@@ -115,6 +115,7 @@ def run_migration_check(validator):
     return len(v2_res)
 
 ROOT_SETTLEMENT_CARRIER_KEYS = ("accepts", "payTo", "networks", "fee", "access")
+V1_OPTION_KEYS = frozenset({"resource", "payTo", "maxAmountRequired", "maxTimeoutSeconds", "mimeType", "outputSchema"})
 _SETTLEMENT_SUMMARY_VALIDATOR = None
 
 def _get_settlement_summary_validator():
@@ -137,18 +138,22 @@ def _obj(v, where: str) -> dict:
 def relocate_root_settlement_carriers(doc: dict) -> dict:
     """Section 8.3.2: Pure, idempotent relocation of root payment carriers into extensions.settlement.
 
+    Enforces schema conformance and eip155:<reference> == chainId descriptor coherence
+    (conforms, not payable) across any resulting extensions.settlement object, whether
+    built from relocated root keys or already present on the input document.
     Aborts with ValueError if:
       (1) document, extensions, or extensions.settlement is not an object,
       (2) extensions.settlement.<key> already exists with a different value, or
-      (3) the resulting extensions.settlement fails definitions/settlementSummary
-          (e.g., bare v1 network family names like 'base' or v1 root accepts[] option keys).
+      (3) the resulting extensions.settlement fails definitions/settlementSummary or
+          eip155:<reference> == chainId coherence (naming per-resource resources[].accepts[]
+          when v1 option keys fail additionalProperties).
     """
     _obj(doc, "document")
     out = json.loads(json.dumps(doc))
     ext_raw = _obj(out.get("extensions"), "extensions")
     _obj(ext_raw.get("settlement"), "extensions.settlement")
     present = [k for k in ROOT_SETTLEMENT_CARRIER_KEYS if k in doc]
-    if not present:
+    if not present and "settlement" not in ext_raw:
         return out
     for k in present:
         del out[k]
@@ -170,11 +175,37 @@ def relocate_root_settlement_carriers(doc: dict) -> dict:
     if summary_errors:
         err = summary_errors[0]
         rel_path = "/".join(str(p) for p in err.path) or "(root)"
+        if err.validator == "additionalProperties" and isinstance(err.instance, dict):
+            v1_keys = sorted(set(err.instance) & V1_OPTION_KEYS)
+            if v1_keys:
+                raise ValueError(
+                    f"extensions.settlement/{rel_path} fails settlementSummary (additionalProperties): "
+                    f"v1 payment option keys {v1_keys} do not belong in extensions.settlement; "
+                    f"migrate root accepts[] to per-resource resources[].accepts[] with translated v2 keys "
+                    f"(path, recipient, amount/maxAmount, CAIP-2 network) per §8.2/§8.3.2 ({err.message})"
+                )
         raise ValueError(
             f"extensions.settlement/{rel_path} fails settlementSummary ({err.validator}): {err.message}"
         )
-    ext["settlement"] = settlement
-    out["extensions"] = ext
+    for idx, net_item in enumerate(settlement.get("networks") or []):
+        if isinstance(net_item, dict):
+            net_str = net_item.get("network")
+            chain_id = net_item.get("chainId")
+            if (
+                isinstance(net_str, str)
+                and net_str.startswith("eip155:")
+                and isinstance(chain_id, int)
+                and not isinstance(chain_id, bool)
+            ):
+                ref = net_str.split(":", 1)[1]
+                if not ref.isdigit() or int(ref) != chain_id:
+                    raise ValueError(
+                        f"extensions.settlement/networks/{idx}/chainId coherence failure: "
+                        f"chainId {chain_id} does not match eip155 reference {ref!r} in network {net_str!r}"
+                    )
+    if present:
+        ext["settlement"] = settlement
+        out["extensions"] = ext
     return out
 
 def read_settlement_summary_key(doc: dict, key: str):
@@ -452,6 +483,9 @@ def run_tests():
         dict(pointer_with_root_summary, extensions="str"),
         {"x402Version": 2, "resources": ["https://a.example/x"], "networks": ["base"]},
         {"x402Version": 2, "resources": ["https://a.example/x"], "networks": ["base", "solana"]},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "extensions": {"settlement": {"networks": ["base"]}}},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "networks": [{"network": "eip155:8453", "chainId": 8454, "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}]},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "extensions": {"settlement": {"networks": [{"network": "eip155:8453", "chainId": 8454, "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}]}}},
         {
             "x402Version": 1,
             "accepts": [{
@@ -474,6 +508,34 @@ def run_tests():
             if type(exc) is not ValueError:
                 print(f"[-] FAIL: expected exact ValueError on {bad_reloc_doc!r}, got {type(exc).__name__}: {exc}")
                 sys.exit(1)
+    # Assert specific refusal messages for (1) pre-existing extensions.settlement wrong dialect,
+    # (2) eip155:<reference> vs chainId coherence mismatch, and (3) v1 root accepts[] remedy destination
+    try:
+        relocate_root_settlement_carriers({
+            "x402Version": 1,
+            "accepts": [{
+                "scheme": "exact",
+                "network": "base",
+                "resource": "https://a.example/x",
+                "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                "maxAmountRequired": "100",
+                "maxTimeoutSeconds": 60,
+            }],
+        })
+    except ValueError as exc:
+        if "resources[].accepts[]" not in str(exc) or "§8.2/§8.3.2" not in str(exc):
+            print(f"[-] FAIL: v1 root accepts refusal did not name resources[].accepts[] destination: {exc}")
+            sys.exit(1)
+    try:
+        relocate_root_settlement_carriers({
+            "x402Version": 2,
+            "resources": ["https://a.example/x"],
+            "networks": [{"network": "eip155:8453", "chainId": 8454, "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}],
+        })
+    except ValueError as exc:
+        if "extensions.settlement/networks/0/chainId coherence failure" not in str(exc):
+            print(f"[-] FAIL: eip155/chainId mismatch did not report coherence failure at path: {exc}")
+            sys.exit(1)
     if (read_settlement_summary_key({"extensions": [1]}, "payTo") is not None
             or read_settlement_summary_key({"extensions": {"settlement": [1, 2]}}, "payTo") is not None
             or read_settlement_summary_key([1], "payTo") is not None):
