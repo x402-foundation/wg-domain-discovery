@@ -115,6 +115,17 @@ def run_migration_check(validator):
     return len(v2_res)
 
 ROOT_SETTLEMENT_CARRIER_KEYS = ("accepts", "payTo", "networks", "fee", "access")
+_SETTLEMENT_SUMMARY_VALIDATOR = None
+
+def _get_settlement_summary_validator():
+    global _SETTLEMENT_SUMMARY_VALIDATOR
+    if _SETTLEMENT_SUMMARY_VALIDATOR is None:
+        schema = load_json(SCHEMA_FILE)
+        subschema = dict(schema["definitions"]["settlementSummary"], definitions=schema["definitions"])
+        _SETTLEMENT_SUMMARY_VALIDATOR = jsonschema.Draft7Validator(
+            subschema, format_checker=build_strict_format_checker()
+        )
+    return _SETTLEMENT_SUMMARY_VALIDATOR
 
 def _obj(v, where: str) -> dict:
     if v is None:
@@ -126,8 +137,11 @@ def _obj(v, where: str) -> dict:
 def relocate_root_settlement_carriers(doc: dict) -> dict:
     """Section 8.3.2: Pure, idempotent relocation of root payment carriers into extensions.settlement.
 
-    Aborts with ValueError if document, extensions, or extensions.settlement is not an object, or if
-    extensions.settlement.<key> already exists with a different value.
+    Aborts with ValueError if:
+      (1) document, extensions, or extensions.settlement is not an object,
+      (2) extensions.settlement.<key> already exists with a different value, or
+      (3) the resulting extensions.settlement fails definitions/settlementSummary
+          (e.g., bare v1 network family names like 'base' or v1 root accepts[] option keys).
     """
     _obj(doc, "document")
     out = json.loads(json.dumps(doc))
@@ -149,6 +163,16 @@ def relocate_root_settlement_carriers(doc: dict) -> dict:
                 f"extensions.settlement.{k} conflict: existing {settlement[k]!r} != root {doc[k]!r}"
             )
         settlement[k] = json.loads(json.dumps(doc[k]))
+    summary_errors = sorted(
+        _get_settlement_summary_validator().iter_errors(settlement),
+        key=lambda e: [str(p) for p in e.path],
+    )
+    if summary_errors:
+        err = summary_errors[0]
+        rel_path = "/".join(str(p) for p in err.path) or "(root)"
+        raise ValueError(
+            f"extensions.settlement/{rel_path} fails settlementSummary ({err.validator}): {err.message}"
+        )
     ext["settlement"] = settlement
     out["extensions"] = ext
     return out
@@ -426,6 +450,21 @@ def run_tests():
         dict(pointer_with_root_summary, extensions={"settlement": 5}),
         dict(pointer_with_root_summary, extensions={"settlement": "str"}),
         dict(pointer_with_root_summary, extensions="str"),
+        {"x402Version": 2, "resources": ["https://a.example/x"], "networks": ["base"]},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "networks": ["base", "solana"]},
+        {
+            "x402Version": 1,
+            "accepts": [{
+                "scheme": "exact",
+                "network": "base",
+                "resource": "https://a.example/x",
+                "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                "maxAmountRequired": "100",
+                "maxTimeoutSeconds": 60,
+            }],
+        },
+        {"resources": ["https://a.example/x"], "payTo": 42, "networks": 7, "fee": ["not", "a", "string"], "access": {"x": 1}},
+        {"resources": ["https://a.example/x"], "payTo": None, "networks": []},
     ]:
         try:
             relocate_root_settlement_carriers(bad_reloc_doc)
@@ -454,16 +493,19 @@ def run_tests():
     if not any(e.validator == "not" and list(e.path) == [] for e in validator.iter_errors(root_settlement_doc)):
         print("[-] FAIL: root 'settlement' key was not rejected by root 'not.anyOf'")
         sys.exit(1)
-    # Relocated extensions.settlement is schema-validated against settlementSummary
+    # Direct extensions.settlement is schema-validated against settlementSummary
     for bad_summary_carriers in [
         {"payTo": 42, "networks": 7, "fee": ["not", "a", "string"], "access": {"x": 1}},
         {"payTo": None, "networks": []},
+        {"networks": ["base"]},
     ]:
-        bad_relocated = relocate_root_settlement_carriers(
-            dict({"resources": ["https://a.example/x"]}, **bad_summary_carriers)
-        )
-        if not list(validator.iter_errors(bad_relocated)):
-            print(f"[-] FAIL: malformed extensions.settlement accepted by schema: {bad_relocated!r}")
+        bad_direct = {
+            "x402Version": 2,
+            "resources": ["https://a.example/x"],
+            "extensions": {"settlement": bad_summary_carriers},
+        }
+        if not list(validator.iter_errors(bad_direct)):
+            print(f"[-] FAIL: malformed extensions.settlement accepted by schema: {bad_direct!r}")
             sys.exit(1)
     print("[PASS] relocate_root_settlement_carriers & read_settlement_summary_key (§8.3.2): "
           "schema-validated settlementSummary, root 'settlement' forbidden, uniform ValueError refusal, and total reader")
