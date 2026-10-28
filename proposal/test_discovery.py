@@ -178,11 +178,18 @@ def relocate_root_settlement_carriers(doc: dict) -> dict:
         if err.validator == "additionalProperties" and isinstance(err.instance, dict):
             v1_keys = sorted(set(err.instance) & V1_OPTION_KEYS)
             if v1_keys:
+                if "accepts" in present:
+                    raise ValueError(
+                        f"extensions.settlement/{rel_path} fails settlementSummary (additionalProperties): "
+                        f"v1 payment option keys {v1_keys} in root accepts[] do not belong in extensions.settlement; "
+                        f"migrate root accepts[] to per-resource resources[].accepts[] with translated v2 keys "
+                        f"(path, recipient, amount/maxAmount, CAIP-2 network) per §8.2/§8.3.2 ({err.message})"
+                    )
                 raise ValueError(
                     f"extensions.settlement/{rel_path} fails settlementSummary (additionalProperties): "
-                    f"v1 payment option keys {v1_keys} do not belong in extensions.settlement; "
-                    f"migrate root accepts[] to per-resource resources[].accepts[] with translated v2 keys "
-                    f"(path, recipient, amount/maxAmount, CAIP-2 network) per §8.2/§8.3.2 ({err.message})"
+                    f"v1 payment option keys {v1_keys} in extensions.settlement.accepts[] must be translated "
+                    f"in-place to v2 paymentOption keys (recipient, amount/minAmount/maxAmount, CAIP-2 network) "
+                    f"per §8.3.2 ({err.message})"
                 )
         raise ValueError(
             f"extensions.settlement/{rel_path} fails settlementSummary ({err.validator}): {err.message}"
@@ -191,12 +198,12 @@ def relocate_root_settlement_carriers(doc: dict) -> dict:
         if isinstance(net_item, dict):
             net_str = net_item.get("network")
             chain_id = net_item.get("chainId")
-            if (
-                isinstance(net_str, str)
-                and net_str.startswith("eip155:")
-                and isinstance(chain_id, int)
-                and not isinstance(chain_id, bool)
-            ):
+            if isinstance(chain_id, int) and not isinstance(chain_id, bool) and isinstance(net_str, str):
+                if not net_str.startswith("eip155:"):
+                    raise ValueError(
+                        f"extensions.settlement/networks/{idx}/chainId coherence failure: "
+                        f"chainId {chain_id} requires an eip155:<chainId> network identifier, got {net_str!r}"
+                    )
                 ref = net_str.split(":", 1)[1]
                 if not ref.isdigit() or int(ref) != chain_id:
                     raise ValueError(
@@ -484,8 +491,12 @@ def run_tests():
         {"x402Version": 2, "resources": ["https://a.example/x"], "networks": ["base"]},
         {"x402Version": 2, "resources": ["https://a.example/x"], "networks": ["base", "solana"]},
         {"x402Version": 2, "resources": ["https://a.example/x"], "extensions": {"settlement": {"networks": ["base"]}}},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "networks": [{"network": "base", "chainId": 1}]},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "networks": [{"network": "EIP155:8453", "chainId": 8454}]},
+        {"x402Version": 2, "resources": ["https://a.example/x"], "networks": [{"network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp", "chainId": 8453}]},
         {"x402Version": 2, "resources": ["https://a.example/x"], "networks": [{"network": "eip155:8453", "chainId": 8454, "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}]},
         {"x402Version": 2, "resources": ["https://a.example/x"], "extensions": {"settlement": {"networks": [{"network": "eip155:8453", "chainId": 8454, "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}]}}},
+        load_json(MIGRATION_DIR / "incumbent-legacy.json"),
         {
             "x402Version": 1,
             "accepts": [{
@@ -496,6 +507,20 @@ def run_tests():
                 "maxAmountRequired": "100",
                 "maxTimeoutSeconds": 60,
             }],
+        },
+        {
+            "x402Version": 2,
+            "resources": ["https://a.example/x"],
+            "extensions": {
+                "settlement": {
+                    "accepts": [{
+                        "scheme": "exact",
+                        "network": "eip155:8453",
+                        "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                        "maxAmountRequired": "100",
+                    }],
+                },
+            },
         },
         {"resources": ["https://a.example/x"], "payTo": 42, "networks": 7, "fee": ["not", "a", "string"], "access": {"x": 1}},
         {"resources": ["https://a.example/x"], "payTo": None, "networks": []},
@@ -508,8 +533,8 @@ def run_tests():
             if type(exc) is not ValueError:
                 print(f"[-] FAIL: expected exact ValueError on {bad_reloc_doc!r}, got {type(exc).__name__}: {exc}")
                 sys.exit(1)
-    # Assert specific refusal messages for (1) pre-existing extensions.settlement wrong dialect,
-    # (2) eip155:<reference> vs chainId coherence mismatch, and (3) v1 root accepts[] remedy destination
+    # Assert specific refusal messages for (1) root accepts[] vs (2) pre-existing extensions.settlement.accepts[]
+    # and (3) eip155:<reference> vs chainId coherence mismatch
     try:
         relocate_root_settlement_carriers({
             "x402Version": 1,
@@ -530,6 +555,25 @@ def run_tests():
         relocate_root_settlement_carriers({
             "x402Version": 2,
             "resources": ["https://a.example/x"],
+            "extensions": {
+                "settlement": {
+                    "accepts": [{
+                        "scheme": "exact",
+                        "network": "eip155:8453",
+                        "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+                        "maxAmountRequired": "100",
+                    }],
+                },
+            },
+        })
+    except ValueError as exc:
+        if "in-place to v2 paymentOption keys" not in str(exc) or "resources[].accepts[]" in str(exc):
+            print(f"[-] FAIL: pre-existing extensions.settlement.accepts refusal named wrong destination: {exc}")
+            sys.exit(1)
+    try:
+        relocate_root_settlement_carriers({
+            "x402Version": 2,
+            "resources": ["https://a.example/x"],
             "networks": [{"network": "eip155:8453", "chainId": 8454, "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913"}],
         })
     except ValueError as exc:
@@ -541,10 +585,14 @@ def run_tests():
             or read_settlement_summary_key([1], "payTo") is not None):
         print("[-] FAIL: read_settlement_summary_key is not total on non-object inputs")
         sys.exit(1)
-    # Relocation-only on incumbent-legacy.json (76 pointerResource entries) validates with 0 schema errors
-    incumbent_relocated_only = relocate_root_settlement_carriers(load_json(MIGRATION_DIR / "incumbent-legacy.json"))
+    # Relocation on incumbent-legacy.json once descriptor networks use canonical CAIP-2 (eip155:8453) validates with 0 schema errors
+    incumbent_caip2_descriptors = load_json(MIGRATION_DIR / "incumbent-legacy.json")
+    incumbent_caip2_descriptors["networks"] = [
+        dict(d, network=f"eip155:{d['chainId']}") for d in incumbent_caip2_descriptors["networks"]
+    ]
+    incumbent_relocated_only = relocate_root_settlement_carriers(incumbent_caip2_descriptors)
     if list(validator.iter_errors(incumbent_relocated_only)):
-        print("[-] FAIL: relocate_root_settlement_carriers(incumbent-legacy.json) did not validate with 0 errors")
+        print("[-] FAIL: relocate_root_settlement_carriers(incumbent_caip2_descriptors) did not validate with 0 errors")
         sys.exit(1)
     # Root 'settlement' key is forbidden by root not.anyOf
     root_settlement_doc = {
@@ -560,6 +608,8 @@ def run_tests():
         {"payTo": 42, "networks": 7, "fee": ["not", "a", "string"], "access": {"x": 1}},
         {"payTo": None, "networks": []},
         {"networks": ["base"]},
+        {"networks": [{"network": "base", "chainId": 1}]},
+        {"networks": [{"network": "EIP155:8453", "chainId": 8454}]},
     ]:
         bad_direct = {
             "x402Version": 2,

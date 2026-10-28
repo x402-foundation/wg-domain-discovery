@@ -182,7 +182,7 @@
                 "type": "object",
                 "required": ["network"],
                 "properties": {
-                  "network": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+                  "network": { "$ref": "#/definitions/caip2Network" },
                   "chainId": { "type": "integer", "minimum": 1 },
                   "asset": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
                   "facilitator": {
