@@ -1,0 +1,21 @@
+{
+  "x402Version": 2,
+  "keys": [
+    {
+      "alg": "Ed25519",
+      "publicKey": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
+    }
+  ],
+  "resources": [
+    {
+      "path": "/api/v1/test",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "amount": "100"
+        }
+      ]
+    }
+  ]
+}

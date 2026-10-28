@@ -1,0 +1,6 @@
+{
+  "x402Version": 2,
+  "openapi": [
+    "https://api.example.com/openapi.json"
+  ]
+}

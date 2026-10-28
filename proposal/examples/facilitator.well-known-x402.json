@@ -1,0 +1,11 @@
+{
+  "x402Version": 2,
+  "kind": "facilitator",
+  "keys": [
+    {
+      "kid": "fac-01._x402key.facilitator.example.com",
+      "alg": "Ed25519",
+      "publicKey": "e4d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f70751"
+    }
+  ]
+}

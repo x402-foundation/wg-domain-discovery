@@ -1,0 +1,6 @@
+{
+  "x402Version": 2,
+  "resources": [
+    "https:///api/v1/search"
+  ]
+}

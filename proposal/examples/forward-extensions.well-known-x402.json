@@ -1,0 +1,24 @@
+{
+  "x402Version": 2,
+  "resources": [
+    {
+      "path": "/api/v1/compute",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "amount": "5000"
+        }
+      ]
+    }
+  ],
+  "extensions": {
+    "rateLimiting": {
+      "tier": "enterprise",
+      "maxRequestsPerMinute": 1000
+    },
+    "routingHints": {
+      "preferredRegion": "us-east"
+    }
+  }
+}

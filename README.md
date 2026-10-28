@@ -1,5 +1,12 @@
 # Domain Discovery Working Group
 
+## Active Proposals
+
+- **[Canonical Domain Discovery Specification](proposal/domain-discovery.md)**: Authoritative RFC 8615 single-lane well-known manifest specification (`/.well-known/x402`), featuring multi-rail settlement support, DNS ground truth binding, strict JSON schema validation, and verified test fixtures.
+  - **Specification**: [`proposal/domain-discovery.md`](proposal/domain-discovery.md)
+  - **JSON Schema**: [`proposal/domain-discovery.schema.json`](proposal/domain-discovery.schema.json)
+  - **Conformance Suite**: Run `python3 proposal/test_discovery.py`
+
 ## Meetings
 
 Bi-weekly on Mondays 10:00 AM CT | 11:00 AM ET | 8:00 AM PT | 4:00 PM BST | 11:00 PM SGT

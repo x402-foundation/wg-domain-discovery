@@ -1,0 +1,20 @@
+{
+  "x402Version": 2,
+  "kind": "resource-server",
+  "openapi": "https://api.example.com/docs/openapi.json",
+  "resources": [
+    {
+      "path": "/api/v1/search",
+      "description": "Indexed semantic search queries",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "amount": "25000",
+          "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+        }
+      ]
+    }
+  ]
+}

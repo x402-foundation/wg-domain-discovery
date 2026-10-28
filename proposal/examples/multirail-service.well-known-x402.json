@@ -1,0 +1,71 @@
+{
+  "x402Version": 2,
+  "kind": ["resource-server"],
+  "keys": [
+    {
+      "kid": "s1._x402key.example.com",
+      "alg": "Ed25519",
+      "publicKey": "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a"
+    }
+  ],
+  "facilitator": "https://facilitator.example.com",
+  "resources": [
+    {
+      "path": "/api/v1/inference",
+      "description": "Deterministic hardware-attested compute inference execution",
+      "methods": ["POST"],
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "amount": "50000",
+          "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+        },
+        {
+          "scheme": "exact",
+          "network": "eip155:14",
+          "asset": "0xe7cd...USDT0",
+          "amount": "50000",
+          "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+        },
+        {
+          "scheme": "exact",
+          "network": "xrpl:0",
+          "asset": "XRP",
+          "amount": "250000",
+          "recipient": "rN7n7otQDd6FczFgLdSqtcsAUxDkw6fzRH"
+        },
+        {
+          "scheme": "exact",
+          "network": "solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp",
+          "asset": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+          "amount": "50000",
+          "recipient": "7cvQYqM3o2pWw5b5R5vGfL3hK1aB8yU7bJ6zM9xN5eL4"
+        },
+        {
+          "scheme": "batch-settlement",
+          "network": "stellar:pubnet",
+          "asset": "USDC:GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN",
+          "amount": "50000",
+          "recipient": "GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5"
+        }
+      ]
+    },
+    {
+      "path": "/api/v1/stream",
+      "description": "Continuous streaming telemetry with bounds",
+      "methods": ["GET"],
+      "accepts": [
+        {
+          "scheme": "upto",
+          "network": "eip155:8453",
+          "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          "minAmount": "1000",
+          "maxAmount": "1000000",
+          "recipient": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+        }
+      ]
+    }
+  ]
+}

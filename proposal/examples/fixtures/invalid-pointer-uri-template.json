@@ -1,0 +1,9 @@
+{
+  "x402Version": 2,
+  "resources": [
+    {
+      "url": "https://api.example.com/report/{agent_id}",
+      "method": "GET"
+    }
+  ]
+}

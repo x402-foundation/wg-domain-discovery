@@ -1,0 +1,1034 @@
+{
+  "x402Version": 2,
+  "kind": "resource-server",
+  "name": "minia2a — x402 Agent API Marketplace",
+  "description": "1,600+ pay-per-call x402 microservices for AI agents. Crypto data, web scraping, AI inference, token security, gas monitoring, and more. 5 free trial calls per signed wallet. USDC on Base.",
+  "url": "https://minia2a.uk",
+  "facilitator": "https://facilitator.payai.network",
+  "payTo": "0xAb62452b4b019bC4402BFfCca6C706d16d72A7Bf",
+  "networks": [
+    {
+      "network": "base",
+      "chainId": 8453,
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "facilitator": "https://facilitator.payai.network"
+    },
+    {
+      "network": "circle",
+      "chainId": 8453,
+      "asset": "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+      "facilitator": "https://gateway-api.circle.com/v1/x402"
+    }
+  ],
+  "access": {
+    "type": "pay-per-call",
+    "trial": "5 free trial calls per signed wallet"
+  },
+  "fee": "5%",
+  "endpoints": [
+    {
+      "id": "x402-gas",
+      "name": "Multi-Chain Gas Price",
+      "description": "Gas prices across 5 chains.",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-gas"
+    },
+    {
+      "id": "x402-web-scrape",
+      "name": "Web Scraper",
+      "description": "Clean text from URL, alias of text-scrape.",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-web-scrape"
+    },
+    {
+      "id": "x402-store",
+      "name": "Mythos x402 Memory Store",
+      "description": "Append up to 4000 characters to the platform's agent-memory log and return an index id. Storage is platform-wide, not per-wallet, and no endpoint currently reads it back — treat this as a write-only record log.",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-store"
+    },
+    {
+      "id": "x402-find",
+      "name": "Mythos x402 Bazaar Find",
+      "description": "Keyword search over the live x402 service catalogue, returning matching service ids, names, endpoints and prices. Supports q (query) and limit (1-20).",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-find"
+    },
+    {
+      "id": "x402-polymarket",
+      "name": "Polymarket Odds Live",
+      "description": "Browse Polymarket markets by tag/category, with everything you need to trade what you find — conditionId, CLOB token ids, outcome names and prices, current bid/ask, end date and the minimum price tick. Use this when you know the category you want; use x402-poly-price to search by keyword, x402-poly-markets for the overall busiest markets, and x402-polymarket-scan for whole events instead of single markets.",
+      "price": 0.05,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-polymarket"
+    },
+    {
+      "id": "x402-web-retrieve",
+      "name": "WebRetriever AI Agent",
+      "description": "Fetch a webpage safely with SSRF protection and extract its clean text content plus title and meta tags.",
+      "price": 0.05,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-web-retrieve"
+    },
+    {
+      "id": "x402-wallet",
+      "name": "Wallet Scan",
+      "description": "Single-chain wallet overview.",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-wallet"
+    },
+    {
+      "id": "x402-recall",
+      "name": "Mythos x402 Recall",
+      "description": "Keyword search over the live x402 service catalogue (up to 500 characters of query), returning matching service ids, names, endpoints and prices. Same catalogue search as x402-find, with a longer query limit.",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-recall"
+    },
+    {
+      "id": "x402-time",
+      "name": "Time Utilities",
+      "description": "UTC time, unix, ms.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-time"
+    },
+    {
+      "id": "x402-ecosystem-health",
+      "name": "Ecosystem Health",
+      "description": "Live ecosystem metrics.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-ecosystem-health"
+    },
+    {
+      "id": "x402-email",
+      "name": "Email Sender",
+      "description": "Validate an email address: format check, domain MX-record presence and disposable-email detection. Free — no key or SMTP needed.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-email"
+    },
+    {
+      "id": "x402-email-verify",
+      "name": "Email Verifier",
+      "description": "Verify email validity.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-email-verify"
+    },
+    {
+      "id": "x402-bounties",
+      "name": "Bounty Aggregator",
+      "description": "Cross-platform bounty aggregator.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-bounties"
+    },
+    {
+      "id": "x402-text-scrape",
+      "name": "Text Scraper",
+      "description": "Extract text from URL.",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-text-scrape"
+    },
+    {
+      "id": "x402-api-review",
+      "name": "API Review",
+      "description": "Review API design.",
+      "price": 0.02,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-api-review"
+    },
+    {
+      "id": "x402-text-to-json",
+      "name": "Text to JSON",
+      "description": "Structured text to JSON.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-text-to-json"
+    },
+    {
+      "id": "x402-address-parse",
+      "name": "Address Parser",
+      "description": "Parse blockchain addresses.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-address-parse"
+    },
+    {
+      "id": "x402-wallet-intel",
+      "name": "Wallet Intel",
+      "description": "Multi-chain wallet profile.",
+      "price": 0.5,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-wallet-intel"
+    },
+    {
+      "id": "x402-base64",
+      "name": "Base64 Encode/Decode",
+      "description": "Encode/decode base64 strings.",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-base64"
+    },
+    {
+      "id": "x402-sentiment",
+      "name": "Sentiment Analyzer",
+      "description": "Lexicon-based analysis.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-sentiment"
+    },
+    {
+      "id": "x402-summarize",
+      "name": "AI Text Summarizer",
+      "description": "Concise text summarization via DeepSeek LLM. Provide text; returns a short summary of the key points.",
+      "price": 0.02,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-summarize"
+    },
+    {
+      "id": "x402-pdf-text",
+      "name": "PDF Text",
+      "description": "Extract text from PDF files.",
+      "price": 0.02,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-pdf-text"
+    },
+    {
+      "id": "x402-abi-lookup",
+      "name": "ABI Lookup",
+      "description": "Contract ABI lookup via 4byte.directory.",
+      "price": 0.1,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-abi-lookup"
+    },
+    {
+      "id": "x402-ens-resolve",
+      "name": "ENS Name Resolver",
+      "description": "ENS to ETH address.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-ens-resolve"
+    },
+    {
+      "id": "x402-trading-signal",
+      "name": "Trading Signal",
+      "description": "On-chain signals.",
+      "price": 0.03,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-trading-signal"
+    },
+    {
+      "id": "x402-agent-skill-pack",
+      "name": "Agent Skill Pack",
+      "description": "Packaged agent skills.",
+      "price": 0.05,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-agent-skill-pack"
+    },
+    {
+      "id": "x402-markdown",
+      "name": "Markdown Converter",
+      "description": "Markdown to text or HTML.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-markdown"
+    },
+    {
+      "id": "x402-defi-directory",
+      "name": "DeFi Directory",
+      "description": "Curated DeFi protocols.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-defi-directory"
+    },
+    {
+      "id": "x402-price-oracle",
+      "name": "Price Oracle",
+      "description": "Multi-source price oracle.",
+      "price": 0.03,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-price-oracle"
+    },
+    {
+      "id": "x402-http-analyze",
+      "name": "HTTP Analyze",
+      "description": "HTTP header analysis.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-http-analyze"
+    },
+    {
+      "id": "x402-date-math",
+      "name": "Date Math",
+      "description": "Date arithmetic and formatting.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-date-math"
+    },
+    {
+      "id": "x402-jwt-decode",
+      "name": "JWT Decoder",
+      "description": "Decode a JWT token — header, payload, and expiry.",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-jwt-decode"
+    },
+    {
+      "id": "x402-prompt-templates",
+      "name": "Prompt Templates",
+      "description": "AI prompt template library.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-prompt-templates"
+    },
+    {
+      "id": "x402-token-search",
+      "name": "Token Search",
+      "description": "Search tokens by symbol or name via GeckoTerminal, returning matching pools and metadata.",
+      "price": 0.05,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-token-search"
+    },
+    {
+      "id": "x402-uuid",
+      "name": "UUID v4 Generator",
+      "description": "Crypto-random UUIDs.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-uuid"
+    },
+    {
+      "id": "x402-hash",
+      "name": "Hash Generator",
+      "description": "Compute hash digests (SHA256, MD5, etc.).",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-hash"
+    },
+    {
+      "id": "x402-mythos-ekg",
+      "name": "Mythos Agent EKG",
+      "description": "Mythos heartbeat.",
+      "price": 0.05,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-mythos-ekg"
+    },
+    {
+      "id": "x402-keywords",
+      "name": "Keyword Extractor",
+      "description": "Extract keywords from text.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-keywords"
+    },
+    {
+      "id": "x402-dns",
+      "name": "DNS Record Lookup",
+      "description": "A, AAAA, MX, TXT, NS, CNAME.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-dns"
+    },
+    {
+      "id": "x402-text-stats",
+      "name": "Text Stats",
+      "description": "Text statistics — word count, readability, sentiment.",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-text-stats"
+    },
+    {
+      "id": "x402-text-diff",
+      "name": "Text Diff",
+      "description": "Compute text differences.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-text-diff"
+    },
+    {
+      "id": "x402-markdown-table",
+      "name": "Markdown Table",
+      "description": "Extract tables from Markdown into structured JSON — list of tables, each with headers and row objects.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-markdown-table"
+    },
+    {
+      "id": "x402-regex-explain",
+      "name": "Regex Explainer",
+      "description": "Explain regex in plain English.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-regex-explain"
+    },
+    {
+      "id": "x402-dex-price",
+      "name": "Multi-Chain DEX Price",
+      "description": "Token price from GeckoTerminal.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-dex-price"
+    },
+    {
+      "id": "x402-csv-json",
+      "name": "CSV to JSON",
+      "description": "Convert CSV data to JSON.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-csv-json"
+    },
+    {
+      "id": "x402-guardian",
+      "name": "Guardian",
+      "description": "Security guardian service.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-guardian"
+    },
+    {
+      "id": "x402-qr",
+      "name": "QR Code Generator",
+      "description": "Generate a QR code for text or a URL.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-qr"
+    },
+    {
+      "id": "x402-random",
+      "name": "Random Generator",
+      "description": "Crypto-secure random.",
+      "price": 0.1,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-random"
+    },
+    {
+      "id": "x402-polymarket-scan",
+      "name": "Polymarket Scanner",
+      "description": "Scan live Polymarket events ranked by volume, each with its markets inside — one call shows a whole topic rather than a single question. The cheapest entry point in this family: use it to see what is worth looking at, then x402-polymarket-odds for the specific market you pick.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-polymarket-scan"
+    },
+    {
+      "id": "x402-color-palette",
+      "name": "Color Palette",
+      "description": "Generate color palettes.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-color-palette"
+    },
+    {
+      "id": "x402-emoji",
+      "name": "Emoji Lookup",
+      "description": "Emoji utilities — lookup, convert, and search.",
+      "price": 0.3,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-emoji"
+    },
+    {
+      "id": "x402-math",
+      "name": "Math Evaluator",
+      "description": "Safe math expressions.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-math"
+    },
+    {
+      "id": "x402-chain-registry",
+      "name": "Chain Registry",
+      "description": "Chain metadata registry.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-chain-registry"
+    },
+    {
+      "id": "x402-data-enrich",
+      "name": "Data Enrich",
+      "description": "Enrich company/domain/person with web data + AI.",
+      "price": 0.02,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-data-enrich"
+    },
+    {
+      "id": "x402-url-codec",
+      "name": "URL Encode/Decode",
+      "description": "URL encode/decode strings.",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-url-codec"
+    },
+    {
+      "id": "x402-color",
+      "name": "Color Converter",
+      "description": "Color utilities — convert, blend, and manipulate colors.",
+      "price": 0.5,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-color"
+    },
+    {
+      "id": "x402-country",
+      "name": "Country Info",
+      "description": "Country by ISO code.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-country"
+    },
+    {
+      "id": "x402-onchain-reads-v1",
+      "name": "Onchain Reads",
+      "description": "Multi-chain onchain reads.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-onchain-reads-v1"
+    },
+    {
+      "id": "x402-uptime",
+      "name": "Platform Uptime",
+      "description": "Uptime and restart count.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-uptime"
+    },
+    {
+      "id": "x402-chain-info",
+      "name": "Multi-Chain Block + Gas",
+      "description": "Live block height + gas for ETH/Base/Polygon.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-chain-info"
+    },
+    {
+      "id": "x402-fetch",
+      "name": "Smart Page Fetcher",
+      "description": "Fetch a page safely: returns raw HTML, HTTP status and extracted links with SSRF protection. Not a rendered browser view.",
+      "price": 0.02,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-fetch"
+    },
+    {
+      "id": "x402-liveness-check-v1",
+      "name": "Liveness Check",
+      "description": "Service liveness probe.",
+      "price": 0.05,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-liveness-check-v1"
+    },
+    {
+      "id": "a-----mrj1xqd5",
+      "name": "A股龙虎榜",
+      "description": "Returns the day's A-share dragon-tiger details: listed stocks, top-5 buy/sell seats, institution/hot-money net, listing reason (limit-up/down/turnover/amplitude). Full seat-game panorama.\n\n-- English --\n返回当日 A股龙虎榜明细：上榜个股、买卖前五席位、机构/游资净额、上榜原因（涨停/跌停/换手/振幅）。席位博弈全景。",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/a-----mrj1xqd5"
+    },
+    {
+      "id": "a-pe-pb-----mrj23i7f",
+      "name": "A股PE/PB估值分位",
+      "description": "Pass a code; returns the stock's PE/PB historical percentile (where it sits in history), percentile value, historical range and peer comparison. See cheap-or-expensive at a glance.\n\n-- English --\n传入代码，返回该股的 PE/PB 历史分位（当前处于历史的百分之多少）、分位值、历史区间与同行对比。一眼看清贵不贵。",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/a-pe-pb-----mrj23i7f"
+    },
+    {
+      "id": "x402-search",
+      "name": "x402 Unified Search",
+      "description": "Cross-directory x402 service search.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-search"
+    },
+    {
+      "id": "x402-fee-history",
+      "name": "Base Fee History",
+      "description": "Last N blocks base fee + priority fee.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-fee-history"
+    },
+    {
+      "id": "x402-npm-audit",
+      "name": "NPM Audit",
+      "description": "NPM package security audit.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-npm-audit"
+    },
+    {
+      "id": "x402-pip-audit",
+      "name": "Pip Audit",
+      "description": "Python package security audit.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-pip-audit"
+    },
+    {
+      "id": "x402-json-validate",
+      "name": "JSON Validator",
+      "description": "Validate + pretty-print JSON.",
+      "price": 0.05,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-json-validate"
+    },
+    {
+      "id": "x402-bridge-quote",
+      "name": "Bridge Quote",
+      "description": "Estimate a cross-chain bridge fee from gas costs (honest gas-based estimate, not a live protocol quote). Provide fromChain, toChain, optional amount.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-bridge-quote"
+    },
+    {
+      "id": "x402-gas-time",
+      "name": "Gas Time",
+      "description": "Current gas price and latest block timestamp for a chain (default base) via direct RPC.",
+      "price": 0.1,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-gas-time"
+    },
+    {
+      "id": "x402-token-security",
+      "name": "Token Security Scanner",
+      "description": "ERC-20 risk on Base.",
+      "price": 0.02,
+      "category": "security",
+      "url": "https://minia2a.uk/x402/proxy/x402-token-security"
+    },
+    {
+      "id": "x402-tx-decode",
+      "name": "EVM Transaction Decoder",
+      "description": "Decode EVM calldata.",
+      "price": 0.01,
+      "category": "tools",
+      "url": "https://minia2a.uk/x402/proxy/x402-tx-decode"
+    },
+    {
+      "id": "x402-swap-safety",
+      "name": "Pre-Swap Token Safety Check",
+      "description": "Pre-swap risk analysis.",
+      "price": 0.05,
+      "category": "security",
+      "url": "https://minia2a.uk/x402/proxy/x402-swap-safety"
+    },
+    {
+      "id": "x402-rpc",
+      "name": "Multi-Chain RPC Proxy",
+      "description": "eth_call + RPC reads on 8 chains. Chain, method, params in/out.",
+      "price": 0.01,
+      "category": "data",
+      "url": "https://minia2a.uk/x402/proxy/x402-rpc"
+    },
+    {
+      "id": "x402-payment-audit",
+      "name": "x402 Payment Trust Check",
+      "description": "Black-box check: does the x402 endpoint verify payment (reject forged txHash/signature/replay) before delivering? Buyer-side trust check before you pay. Returns SAFE/RISK/NOT_X402.",
+      "price": 5.0,
+      "category": "security",
+      "url": "https://minia2a.uk/x402/proxy/x402-payment-audit"
+    }
+  ],
+  "endpointsUrl": "https://minia2a.uk/.well-known/x402-service.json",
+  "endpointsCount": 76,
+  "resources": [
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-gas",
+      "method": "GET",
+      "description": "Gas prices across 5 chains."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-web-scrape",
+      "method": "GET",
+      "description": "Clean text from URL, alias of text-scrape."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-store",
+      "method": "GET",
+      "description": "Append up to 4000 characters to the platform's agent-memory log and return an index id. Storage is platform-wide, not per-wallet, and no endpoint currently reads it back — treat this as a write-only record log."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-find",
+      "method": "GET",
+      "description": "Keyword search over the live x402 service catalogue, returning matching service ids, names, endpoints and prices. Supports q (query) and limit (1-20)."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-polymarket",
+      "method": "GET",
+      "description": "Browse Polymarket markets by tag/category, with everything you need to trade what you find — conditionId, CLOB token ids, outcome names and prices, current bid/ask, end date and the minimum price tick. Use this when you know the category you want; use x402-poly-price to search by keyword, x402-poly-markets for the overall busiest markets, and x402-polymarket-scan for whole events instead of single markets."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-web-retrieve",
+      "method": "GET",
+      "description": "Fetch a webpage safely with SSRF protection and extract its clean text content plus title and meta tags."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-wallet",
+      "method": "GET",
+      "description": "Single-chain wallet overview."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-recall",
+      "method": "GET",
+      "description": "Keyword search over the live x402 service catalogue (up to 500 characters of query), returning matching service ids, names, endpoints and prices. Same catalogue search as x402-find, with a longer query limit."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-time",
+      "method": "GET",
+      "description": "UTC time, unix, ms."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-ecosystem-health",
+      "method": "GET",
+      "description": "Live ecosystem metrics."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-email",
+      "method": "GET",
+      "description": "Validate an email address: format check, domain MX-record presence and disposable-email detection. Free — no key or SMTP needed."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-email-verify",
+      "method": "GET",
+      "description": "Verify email validity."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-bounties",
+      "method": "GET",
+      "description": "Cross-platform bounty aggregator."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-text-scrape",
+      "method": "GET",
+      "description": "Extract text from URL."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-api-review",
+      "method": "GET",
+      "description": "Review API design."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-text-to-json",
+      "method": "GET",
+      "description": "Structured text to JSON."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-address-parse",
+      "method": "GET",
+      "description": "Parse blockchain addresses."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-wallet-intel",
+      "method": "GET",
+      "description": "Multi-chain wallet profile."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-base64",
+      "method": "GET",
+      "description": "Encode/decode base64 strings."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-sentiment",
+      "method": "GET",
+      "description": "Lexicon-based analysis."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-summarize",
+      "method": "GET",
+      "description": "Concise text summarization via DeepSeek LLM. Provide text; returns a short summary of the key points."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-pdf-text",
+      "method": "GET",
+      "description": "Extract text from PDF files."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-abi-lookup",
+      "method": "GET",
+      "description": "Contract ABI lookup via 4byte.directory."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-ens-resolve",
+      "method": "GET",
+      "description": "ENS to ETH address."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-trading-signal",
+      "method": "GET",
+      "description": "On-chain signals."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-agent-skill-pack",
+      "method": "GET",
+      "description": "Packaged agent skills."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-markdown",
+      "method": "GET",
+      "description": "Markdown to text or HTML."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-defi-directory",
+      "method": "GET",
+      "description": "Curated DeFi protocols."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-price-oracle",
+      "method": "GET",
+      "description": "Multi-source price oracle."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-http-analyze",
+      "method": "GET",
+      "description": "HTTP header analysis."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-date-math",
+      "method": "GET",
+      "description": "Date arithmetic and formatting."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-jwt-decode",
+      "method": "GET",
+      "description": "Decode a JWT token — header, payload, and expiry."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-prompt-templates",
+      "method": "GET",
+      "description": "AI prompt template library."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-token-search",
+      "method": "GET",
+      "description": "Search tokens by symbol or name via GeckoTerminal, returning matching pools and metadata."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-uuid",
+      "method": "GET",
+      "description": "Crypto-random UUIDs."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-hash",
+      "method": "GET",
+      "description": "Compute hash digests (SHA256, MD5, etc.)."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-mythos-ekg",
+      "method": "GET",
+      "description": "Mythos heartbeat."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-keywords",
+      "method": "GET",
+      "description": "Extract keywords from text."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-dns",
+      "method": "GET",
+      "description": "A, AAAA, MX, TXT, NS, CNAME."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-text-stats",
+      "method": "GET",
+      "description": "Text statistics — word count, readability, sentiment."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-text-diff",
+      "method": "GET",
+      "description": "Compute text differences."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-markdown-table",
+      "method": "GET",
+      "description": "Extract tables from Markdown into structured JSON — list of tables, each with headers and row objects."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-regex-explain",
+      "method": "GET",
+      "description": "Explain regex in plain English."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-dex-price",
+      "method": "GET",
+      "description": "Token price from GeckoTerminal."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-csv-json",
+      "method": "GET",
+      "description": "Convert CSV data to JSON."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-guardian",
+      "method": "GET",
+      "description": "Security guardian service."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-qr",
+      "method": "GET",
+      "description": "Generate a QR code for text or a URL."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-random",
+      "method": "GET",
+      "description": "Crypto-secure random."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-polymarket-scan",
+      "method": "GET",
+      "description": "Scan live Polymarket events ranked by volume, each with its markets inside — one call shows a whole topic rather than a single question. The cheapest entry point in this family: use it to see what is worth looking at, then x402-polymarket-odds for the specific market you pick."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-color-palette",
+      "method": "GET",
+      "description": "Generate color palettes."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-emoji",
+      "method": "GET",
+      "description": "Emoji utilities — lookup, convert, and search."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-math",
+      "method": "GET",
+      "description": "Safe math expressions."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-chain-registry",
+      "method": "GET",
+      "description": "Chain metadata registry."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-data-enrich",
+      "method": "GET",
+      "description": "Enrich company/domain/person with web data + AI."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-url-codec",
+      "method": "GET",
+      "description": "URL encode/decode strings."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-color",
+      "method": "GET",
+      "description": "Color utilities — convert, blend, and manipulate colors."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-country",
+      "method": "GET",
+      "description": "Country by ISO code."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-onchain-reads-v1",
+      "method": "GET",
+      "description": "Multi-chain onchain reads."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-uptime",
+      "method": "GET",
+      "description": "Uptime and restart count."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-chain-info",
+      "method": "GET",
+      "description": "Live block height + gas for ETH/Base/Polygon."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-fetch",
+      "method": "GET",
+      "description": "Fetch a page safely: returns raw HTML, HTTP status and extracted links with SSRF protection. Not a rendered browser view."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-liveness-check-v1",
+      "method": "GET",
+      "description": "Service liveness probe."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/a-----mrj1xqd5",
+      "method": "GET",
+      "description": "Returns the day's A-share dragon-tiger details: listed stocks, top-5 buy/sell seats, institution/hot-money net, listing reason (limit-up/down/turnover/amplitude). Full seat-game panorama.\n\n-- English --\n返回当日 A股龙虎榜明细：上榜个股、买卖前五席位、机构/游资净额、上榜原因（涨停/跌停/换手/振幅）。席位博弈全景。"
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/a-pe-pb-----mrj23i7f",
+      "method": "GET",
+      "description": "Pass a code; returns the stock's PE/PB historical percentile (where it sits in history), percentile value, historical range and peer comparison. See cheap-or-expensive at a glance.\n\n-- English --\n传入代码，返回该股的 PE/PB 历史分位（当前处于历史的百分之多少）、分位值、历史区间与同行对比。一眼看清贵不贵。"
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-search",
+      "method": "GET",
+      "description": "Cross-directory x402 service search."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-fee-history",
+      "method": "GET",
+      "description": "Last N blocks base fee + priority fee."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-npm-audit",
+      "method": "GET",
+      "description": "NPM package security audit."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-pip-audit",
+      "method": "GET",
+      "description": "Python package security audit."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-json-validate",
+      "method": "GET",
+      "description": "Validate + pretty-print JSON."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-bridge-quote",
+      "method": "GET",
+      "description": "Estimate a cross-chain bridge fee from gas costs (honest gas-based estimate, not a live protocol quote). Provide fromChain, toChain, optional amount."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-gas-time",
+      "method": "GET",
+      "description": "Current gas price and latest block timestamp for a chain (default base) via direct RPC."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-token-security",
+      "method": "GET",
+      "description": "ERC-20 risk on Base."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-tx-decode",
+      "method": "GET",
+      "description": "Decode EVM calldata."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-swap-safety",
+      "method": "GET",
+      "description": "Pre-swap risk analysis."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-rpc",
+      "method": "GET",
+      "description": "eth_call + RPC reads on 8 chains. Chain, method, params in/out."
+    },
+    {
+      "url": "https://minia2a.uk/x402/proxy/x402-payment-audit",
+      "method": "GET",
+      "description": "Black-box check: does the x402 endpoint verify payment (reject forged txHash/signature/replay) before delivering? Buyer-side trust check before you pay. Returns SAFE/RISK/NOT_X402."
+    }
+  ],
+  "openapi": "https://minia2a.uk/openapi.json",
+  "openapiUrl": "https://minia2a.uk/openapi.json",
+  "docs": "https://minia2a.uk/x402-developer-guide.html",
+  "register": "POST https://minia2a.uk/api/v1/register-simple {name, wallet, signature}",
+  "stats": "https://minia2a.uk/api/stats",
+  "probe": "https://minia2a.uk/x402/time?probe=1",
+  "agentReady": "https://minia2a.uk/api/agent-ready",
+  "generated_at": "2026-10-14T05:19:01Z",
+  "extra": {
+    "tag": "x402-global-challenge"
+  },
+  "updated": "2026-10-14T05:19:01Z"
+}

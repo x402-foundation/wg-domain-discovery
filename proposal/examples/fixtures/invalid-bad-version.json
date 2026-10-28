@@ -1,0 +1,15 @@
+{
+  "x402Version": 99,
+  "resources": [
+    {
+      "path": "/api/v1/test",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "amount": "100"
+        }
+      ]
+    }
+  ]
+}
