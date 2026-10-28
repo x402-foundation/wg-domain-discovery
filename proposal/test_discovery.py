@@ -116,19 +116,35 @@ def run_migration_check(validator):
 
 ROOT_SETTLEMENT_CARRIER_KEYS = ("accepts", "payTo", "networks", "fee", "access")
 
+def _obj(v, where: str) -> dict:
+    if v is None:
+        return {}
+    if not isinstance(v, dict):
+        raise ValueError(f"{where} must be an object, got {type(v).__name__}")
+    return v
+
 def relocate_root_settlement_carriers(doc: dict) -> dict:
     """Section 8.3.2: Pure, idempotent relocation of root payment carriers into extensions.settlement.
 
-    Aborts with ValueError if extensions.settlement.<key> already exists with a different value.
+    Aborts with ValueError if document, extensions, or extensions.settlement is not an object, or if
+    extensions.settlement.<key> already exists with a different value.
     """
+    _obj(doc, "document")
+    out = json.loads(json.dumps(doc))
+    ext_raw = _obj(out.get("extensions"), "extensions")
+    _obj(ext_raw.get("settlement"), "extensions.settlement")
     present = [k for k in ROOT_SETTLEMENT_CARRIER_KEYS if k in doc]
     if not present:
-        return json.loads(json.dumps(doc))
-    out = {k: json.loads(json.dumps(v)) for k, v in doc.items() if k not in ROOT_SETTLEMENT_CARRIER_KEYS}
-    ext = dict(out.get("extensions") or {})
-    settlement = dict(ext.get("settlement") or {})
+        return out
     for k in present:
-        if k in settlement and settlement[k] != doc[k]:
+        del out[k]
+    ext = dict(ext_raw)
+    settlement = dict(_obj(ext.get("settlement"), "extensions.settlement"))
+    for k in present:
+        if k in settlement and (
+            settlement[k] != doc[k]
+            or json.dumps(settlement[k], sort_keys=True) != json.dumps(doc[k], sort_keys=True)
+        ):
             raise ValueError(
                 f"extensions.settlement.{k} conflict: existing {settlement[k]!r} != root {doc[k]!r}"
             )
@@ -138,24 +154,45 @@ def relocate_root_settlement_carriers(doc: dict) -> dict:
     return out
 
 def read_settlement_summary_key(doc: dict, key: str):
-    """Section 8.3.2: Two-sided transition reader helper (follows both shapes; root wins if both present)."""
+    """Section 8.3.2: Total two-sided transition reader helper (follows both shapes; root wins if both present)."""
+    if not isinstance(doc, dict):
+        return None
     if key in doc:
         return doc[key]
-    return (doc.get("extensions") or {}).get("settlement", {}).get(key)
+    ext = doc.get("extensions")
+    if not isinstance(ext, dict):
+        return None
+    st = ext.get("settlement")
+    return st.get(key) if isinstance(st, dict) else None
 
 def build_strict_format_checker():
     """Build a strict RFC 3987 absolute HTTP(S) URI FormatChecker without optional C/regex deps."""
     checker = jsonschema.FormatChecker()
-    disallowed_chars = set(' \t\r\n{}<>"`|\\^[]')
+    disallowed_chars = set(' \t\r\n\x0b\x0c{}<>"`|\\^[]')
 
     @checker.checks("uri")
     def is_strict_http_uri(instance):
         if not isinstance(instance, str) or not instance:
             return False
-        if any(ch in disallowed_chars for ch in instance):
+        if any(ch.isspace() or ch in disallowed_chars for ch in instance):
             return False
         parsed = urllib.parse.urlsplit(instance)
-        return parsed.scheme in ("http", "https") and bool(parsed.netloc)
+        if parsed.scheme not in ("http", "https") or not parsed.hostname:
+            return False
+        netloc = parsed.netloc
+        if "@" in netloc:
+            userinfo, hostport = netloc.rsplit("@", 1)
+            if not userinfo or "@" in userinfo:
+                return False
+        else:
+            hostport = netloc
+        if ":" in hostport:
+            host, port_str = hostport.split(":", 1)
+            if not host or not port_str or not port_str.isascii() or not port_str.isdigit():
+                return False
+        elif not hostport:
+            return False
+        return True
 
     return checker
 
@@ -181,6 +218,11 @@ def assert_uri_checker_capabilities(validator, schema: dict):
         "https:///path",
         "https://?q",
         "https://#frag",
+        "https://@/path",
+        "https://user@/path",
+        "https://:8080/path",
+        "https://a.example:/path",
+        "https://a.example:abc/path",
         "https://",
         "http://",
         "ftp://a.example/x",
@@ -270,7 +312,9 @@ def run_tests():
         ("invalid-missing-kid.json", "required", ["keys", 0], "signing key missing required kid"),
         ("invalid-method-in-string.json", "pattern", ["resources", 0], "HTTP method embedded inside bare pointer string"),
         ("invalid-pointer-uri-template.json", "pattern", ["resources", 0, "url"], "unresolvable URI template in pointer url"),
-        ("invalid-empty-authority.json", "pattern", ["resources", 0], "empty URI authority after scheme://")
+        ("invalid-empty-authority.json", "pattern", ["resources", 0], "empty URI authority after scheme://"),
+        ("settlement-nonobject.json", "type", ["extensions", "settlement"], "non-object extensions.settlement"),
+        ("extensions-nonobject.json", "type", ["extensions"], "non-object extensions")
     ]
 
     print("\n--- 2. NEGATIVE EDGE FIXTURE TESTS (MUST REJECT ON SPECIFIC CONSTRAINT) ---")
@@ -372,14 +416,57 @@ def run_tests():
     if read_settlement_summary_key(conflict_doc, "fee") != "0.01 USDC":
         print("[-] FAIL: read_settlement_summary_key did not prefer root when both present")
         sys.exit(1)
-    try:
-        relocate_root_settlement_carriers(conflict_doc)
-        print("[-] FAIL: relocate_root_settlement_carriers did not abort on conflicting extensions.settlement.fee")
+    for bad_reloc_doc in [
+        conflict_doc,
+        dict(pointer_with_root_summary, payTo=1, extensions={"settlement": {"payTo": True}}),
+        load_json(FIXTURES_DIR / "settlement-nonobject.json"),
+        load_json(FIXTURES_DIR / "extensions-nonobject.json"),
+        dict(pointer_with_root_summary, extensions={"settlement": [1, 2]}),
+        dict(pointer_with_root_summary, extensions=[1]),
+        dict(pointer_with_root_summary, extensions={"settlement": 5}),
+        dict(pointer_with_root_summary, extensions={"settlement": "str"}),
+        dict(pointer_with_root_summary, extensions="str"),
+    ]:
+        try:
+            relocate_root_settlement_carriers(bad_reloc_doc)
+            print(f"[-] FAIL: relocate_root_settlement_carriers did not raise ValueError on {bad_reloc_doc!r}")
+            sys.exit(1)
+        except Exception as exc:
+            if type(exc) is not ValueError:
+                print(f"[-] FAIL: expected exact ValueError on {bad_reloc_doc!r}, got {type(exc).__name__}: {exc}")
+                sys.exit(1)
+    if (read_settlement_summary_key({"extensions": [1]}, "payTo") is not None
+            or read_settlement_summary_key({"extensions": {"settlement": [1, 2]}}, "payTo") is not None
+            or read_settlement_summary_key([1], "payTo") is not None):
+        print("[-] FAIL: read_settlement_summary_key is not total on non-object inputs")
         sys.exit(1)
-    except ValueError:
-        pass
+    # Relocation-only on incumbent-legacy.json (76 pointerResource entries) validates with 0 schema errors
+    incumbent_relocated_only = relocate_root_settlement_carriers(load_json(MIGRATION_DIR / "incumbent-legacy.json"))
+    if list(validator.iter_errors(incumbent_relocated_only)):
+        print("[-] FAIL: relocate_root_settlement_carriers(incumbent-legacy.json) did not validate with 0 errors")
+        sys.exit(1)
+    # Root 'settlement' key is forbidden by root not.anyOf
+    root_settlement_doc = {
+        "x402Version": 2,
+        "resources": ["https://a.example/x"],
+        "settlement": {"payTo": "0xb"}
+    }
+    if not any(e.validator == "not" and list(e.path) == [] for e in validator.iter_errors(root_settlement_doc)):
+        print("[-] FAIL: root 'settlement' key was not rejected by root 'not.anyOf'")
+        sys.exit(1)
+    # Relocated extensions.settlement is schema-validated against settlementSummary
+    for bad_summary_carriers in [
+        {"payTo": 42, "networks": 7, "fee": ["not", "a", "string"], "access": {"x": 1}},
+        {"payTo": None, "networks": []},
+    ]:
+        bad_relocated = relocate_root_settlement_carriers(
+            dict({"resources": ["https://a.example/x"]}, **bad_summary_carriers)
+        )
+        if not list(validator.iter_errors(bad_relocated)):
+            print(f"[-] FAIL: malformed extensions.settlement accepted by schema: {bad_relocated!r}")
+            sys.exit(1)
     print("[PASS] relocate_root_settlement_carriers & read_settlement_summary_key (§8.3.2): "
-          "0 errors, idempotent, conflict-refusing, and two-sided reader compatible")
+          "schema-validated settlementSummary, root 'settlement' forbidden, uniform ValueError refusal, and total reader")
 
     # Combinatorial truth-table check across mixed [pointer, selfContainedResource] & vacuous [] (§8.2.4)
     inline_opt = [{"scheme": "exact", "network": "eip155:8453", "amount": "100"}]

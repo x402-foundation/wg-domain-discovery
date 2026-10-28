@@ -29,7 +29,7 @@
     "facilitator": {
       "type": "string",
       "format": "uri",
-      "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$",
+      "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$",
       "description": "Optional URI pointing to an external authoritative facilitator service."
     },
     "keys": {
@@ -41,7 +41,13 @@
     },
     "extensions": {
       "type": "object",
-      "description": "Optional container for experimental, forward-compatible, or vendor-specific extension payloads without violating root schema determinism."
+      "description": "Optional container for experimental, forward-compatible, or vendor-specific extension payloads without violating root schema determinism.",
+      "properties": {
+        "settlement": {
+          "$ref": "#/definitions/settlementSummary"
+        }
+      },
+      "additionalProperties": true
     },
     "resources": {
       "type": "array",
@@ -56,14 +62,14 @@
         {
           "type": "string",
           "format": "uri",
-          "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$"
+          "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$"
         },
         {
           "type": "array",
           "items": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$"
+            "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$"
           },
           "minItems": 1
         }
@@ -76,7 +82,8 @@
       { "required": ["payTo"] },
       { "required": ["networks"] },
       { "required": ["fee"] },
-      { "required": ["access"] }
+      { "required": ["access"] },
+      { "required": ["settlement"] }
     ],
     "description": "Payment carriers MUST be declared per-resource inside resources[].accepts[], never at the document root."
   },
@@ -143,6 +150,74 @@
       "pattern": "^[0-9]+$",
       "description": "Non-negative integer string representing asset quantity in its smallest atomic denomination (e.g. satoshis, base units)."
     },
+    "caip2Network": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]{3,8}:[-_a-zA-Z0-9]{1,32}$",
+      "description": "Canonical CAIP-2 blockchain network identifier."
+    },
+    "settlementSummary": {
+      "type": "object",
+      "description": "Optional host-level informational settlement summary under extensions.settlement (§8.3.2).",
+      "properties": {
+        "accepts": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/paymentOption"
+          }
+        },
+        "payTo": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^\\S+$"
+        },
+        "networks": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "oneOf": [
+              { "$ref": "#/definitions/caip2Network" },
+              {
+                "type": "object",
+                "required": ["network"],
+                "properties": {
+                  "network": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+                  "chainId": { "type": "integer", "minimum": 1 },
+                  "asset": { "type": "string", "minLength": 1, "pattern": "^\\S+$" },
+                  "facilitator": {
+                    "type": "string",
+                    "format": "uri",
+                    "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$"
+                  }
+                },
+                "additionalProperties": false
+              }
+            ]
+          }
+        },
+        "fee": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": ".*\\S.*"
+        },
+        "access": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "pattern": ".*\\S.*" },
+            {
+              "type": "object",
+              "required": ["type"],
+              "properties": {
+                "type": { "type": "string", "minLength": 1, "pattern": ".*\\S.*" },
+                "trial": { "type": "string", "minLength": 1 }
+              },
+              "additionalProperties": false
+            }
+          ]
+        }
+      },
+      "additionalProperties": true
+    },
     "verificationKey": {
       "type": "object",
       "required": [
@@ -202,6 +277,8 @@
         },
         "recipient": {
           "type": "string",
+          "minLength": 1,
+          "pattern": "^\\S+$",
           "description": "Authoritative payee address or account identifier."
         },
         "extra": {
@@ -261,7 +338,7 @@
       "then": {
         "type": "string",
         "format": "uri",
-        "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$",
+        "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$",
         "minLength": 1
       },
       "else": {
@@ -276,7 +353,7 @@
           "url": {
             "type": "string",
             "format": "uri",
-            "pattern": "^https?://[^/?#\\s{}<>\"`|\\\\^\\[\\]][^\\s{}<>\"`|\\\\^\\[\\]]*$",
+            "pattern": "^https?://(?:[^/?#@\\s{}<>\"`|\\\\^\\[\\]]+@)?[^/?#:@\\s{}<>\"`|\\\\^\\[\\]]+(?::[0-9]+)?(?:[/?#][^\\s{}<>\"`|\\\\^\\[\\]]*)?$",
             "minLength": 1,
             "description": "Directly dereferenceable RFC 3987 absolute HTTP(S) URI of the monetized resource (URI templates belong on selfContainedResource.path)."
           },

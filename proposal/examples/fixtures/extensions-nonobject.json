@@ -1,0 +1,7 @@
+{
+  "x402Version": 2,
+  "resources": [
+    "https://api.example.com/x402/gas"
+  ],
+  "extensions": [1]
+}
