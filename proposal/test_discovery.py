@@ -114,6 +114,35 @@ def run_migration_check(validator):
           f"{relocated} legacy root key(s) relocated to extensions (section 8.3)")
     return len(v2_res)
 
+ROOT_SETTLEMENT_CARRIER_KEYS = ("accepts", "payTo", "networks", "fee", "access")
+
+def relocate_root_settlement_carriers(doc: dict) -> dict:
+    """Section 8.3.2: Pure, idempotent relocation of root payment carriers into extensions.settlement.
+
+    Aborts with ValueError if extensions.settlement.<key> already exists with a different value.
+    """
+    present = [k for k in ROOT_SETTLEMENT_CARRIER_KEYS if k in doc]
+    if not present:
+        return json.loads(json.dumps(doc))
+    out = {k: json.loads(json.dumps(v)) for k, v in doc.items() if k not in ROOT_SETTLEMENT_CARRIER_KEYS}
+    ext = dict(out.get("extensions") or {})
+    settlement = dict(ext.get("settlement") or {})
+    for k in present:
+        if k in settlement and settlement[k] != doc[k]:
+            raise ValueError(
+                f"extensions.settlement.{k} conflict: existing {settlement[k]!r} != root {doc[k]!r}"
+            )
+        settlement[k] = json.loads(json.dumps(doc[k]))
+    ext["settlement"] = settlement
+    out["extensions"] = ext
+    return out
+
+def read_settlement_summary_key(doc: dict, key: str):
+    """Section 8.3.2: Two-sided transition reader helper (follows both shapes; root wins if both present)."""
+    if key in doc:
+        return doc[key]
+    return (doc.get("extensions") or {}).get("settlement", {}).get(key)
+
 def build_strict_format_checker():
     """Build a strict RFC 3987 absolute HTTP(S) URI FormatChecker without optional C/regex deps."""
     checker = jsonschema.FormatChecker()
@@ -130,27 +159,56 @@ def build_strict_format_checker():
 
     return checker
 
-def assert_uri_checker_capabilities(validator):
-    """Capability self-test: assert strict URI rejection before judging any manifest."""
+def assert_uri_checker_capabilities(validator, schema: dict):
+    """Differential capability self-test: assert 0 divergence between bare pattern-only
+    Draft7Validator(schema, format_checker=None) and strict format-equipped validator across
+    RFC 3986 boundary permutations in both bare-string and {url} object pointer shapes.
+    """
+    bare_validator = jsonschema.Draft7Validator(schema)
+    must_accept_probes = [
+        "https://a.example/x",
+        "https://a.example:8443/x?y=1#z",
+        "http://localhost:3000/x",
+        "https://user@h/x",
+        "https://192.0.2.1:8080/api"
+    ]
     must_reject_probes = [
         "https://x/report/{agent_id}",
         "POST https://x/y",
+        "GET /api/x",
         "/relative/path",
         "not a uri",
         "https:///path",
         "https://?q",
-        "https://#frag"
+        "https://#frag",
+        "https://",
+        "http://",
+        "ftp://a.example/x",
+        "https://[2001:db8::1]/api"
     ]
+    for good_uri in must_accept_probes:
+        for entry in (good_uri, {"url": good_uri}):
+            doc = {"x402Version": 2, "resources": [entry]}
+            if list(bare_validator.iter_errors(doc)) or list(validator.iter_errors(doc)):
+                print(f"[-] FAIL: differential URI check rejected valid probe {entry!r}")
+                sys.exit(1)
     for bad_uri in must_reject_probes:
-        probe_doc = {"x402Version": 2, "resources": [bad_uri]}
-        errs = list(validator.iter_errors(probe_doc))
-        validators_hit = {e.validator for e in errs if list(e.path) == ["resources", 0]}
+        for entry in (bad_uri, {"url": bad_uri}):
+            doc = {"x402Version": 2, "resources": [entry]}
+            bare_errs = list(bare_validator.iter_errors(doc))
+            strict_errs = list(validator.iter_errors(doc))
+            if not bare_errs or not strict_errs:
+                print(f"[-] FAIL: differential divergence on {entry!r}: "
+                      f"bare_errors={len(bare_errs)}, strict_errors={len(strict_errs)}")
+                sys.exit(1)
+        str_errs = list(validator.iter_errors({"x402Version": 2, "resources": [bad_uri]}))
+        validators_hit = {e.validator for e in str_errs if list(e.path) == ["resources", 0]}
         if "pattern" not in validators_hit or "format" not in validators_hit:
             print(f"[-] FAIL: capability check failed on {bad_uri!r}; "
                   f"expected both 'pattern' and 'format' rejection, got {validators_hit}")
             sys.exit(1)
-    print(f"[PASS] capability self-check: validator rejects {len(must_reject_probes)} malformed URI probes "
-          "via both Draft-07 'pattern' and strict RFC 3987 'format: uri'")
+    print(f"[PASS] differential URI capability self-check: {len(must_accept_probes)} valid + "
+          f"{len(must_reject_probes)} malformed probes match across bare (pattern-only) & strict validators")
 
 def run_tests():
     print("=" * 70)
@@ -166,7 +224,7 @@ def run_tests():
     format_checker = build_strict_format_checker()
     validator = jsonschema.Draft7Validator(schema, format_checker=format_checker)
     print(f"[+] Loaded schema: {SCHEMA_FILE.name}")
-    assert_uri_checker_capabilities(validator)
+    assert_uri_checker_capabilities(validator, schema)
 
     # 2. Positive Conformance Tests
     positive_files = [
@@ -287,26 +345,62 @@ def run_tests():
     print("[PASS] empty resources[] array without root x402Version rejected (minItems: 1 required for pointer exemption)")
 
     # Informational root summary relocated into extensions.settlement on a pointer manifest (§8.3.2)
-    pointer_with_relocated_summary = {
+    pointer_with_root_summary = {
         "kind": "resource-server",
         "resources": [
             {"url": "https://api.example.com/x402/gas", "method": "GET", "description": "Gas prices"},
             {"url": "https://api.example.com/x402/quote", "methods": ["GET", "POST"]}
         ],
-        "extensions": {
-            "settlement": {
-                "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
-                "networks": ["eip155:8453"],
-                "fee": "0.01 USDC",
-                "access": "x402"
-            }
-        }
+        "payTo": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+        "networks": ["eip155:8453"],
+        "fee": "0.01 USDC",
+        "access": "x402"
     }
+    pointer_with_relocated_summary = relocate_root_settlement_carriers(pointer_with_root_summary)
     relocated_summary_errors = list(validator.iter_errors(pointer_with_relocated_summary))
     if relocated_summary_errors:
         print(f"[-] FAIL: pointer manifest with extensions.settlement summary rejected: {relocated_summary_errors[0].message}")
         sys.exit(1)
-    print("[PASS] pointer manifest with informational root summary relocated into extensions.settlement accepted (0 errors)")
+    if relocate_root_settlement_carriers(pointer_with_relocated_summary) != pointer_with_relocated_summary:
+        print("[-] FAIL: relocate_root_settlement_carriers is not idempotent")
+        sys.exit(1)
+    if (read_settlement_summary_key(pointer_with_root_summary, "networks") != ["eip155:8453"]
+            or read_settlement_summary_key(pointer_with_relocated_summary, "networks") != ["eip155:8453"]):
+        print("[-] FAIL: read_settlement_summary_key failed across pre/post relocation")
+        sys.exit(1)
+    conflict_doc = dict(pointer_with_root_summary, extensions={"settlement": {"fee": "0.05 USDC"}})
+    if read_settlement_summary_key(conflict_doc, "fee") != "0.01 USDC":
+        print("[-] FAIL: read_settlement_summary_key did not prefer root when both present")
+        sys.exit(1)
+    try:
+        relocate_root_settlement_carriers(conflict_doc)
+        print("[-] FAIL: relocate_root_settlement_carriers did not abort on conflicting extensions.settlement.fee")
+        sys.exit(1)
+    except ValueError:
+        pass
+    print("[PASS] relocate_root_settlement_carriers & read_settlement_summary_key (§8.3.2): "
+          "0 errors, idempotent, conflict-refusing, and two-sided reader compatible")
+
+    # Combinatorial truth-table check across mixed [pointer, selfContainedResource] & vacuous [] (§8.2.4)
+    inline_opt = [{"scheme": "exact", "network": "eip155:8453", "amount": "100"}]
+    mixed_matrix = [
+        ({"resources": ["https://a.example/x", {"path": "/p", "accepts": inline_opt, "x402Version": 2}]}, True),
+        ({"resources": ["https://a.example/x", {"path": "/p", "accepts": inline_opt}]}, False),
+        ({"x402Version": 2, "resources": ["https://a.example/x", {"path": "/p", "accepts": inline_opt}]}, True),
+        ({"x402Version": 2, "resources": []}, True),
+        ({"resources": []}, False),
+    ]
+    for candidate_doc, should_pass in mixed_matrix:
+        errs = list(validator.iter_errors(candidate_doc))
+        if should_pass and errs:
+            print(f"[-] FAIL: mixed matrix expected ACCEPT on {candidate_doc!r}, got {errs[0].message}")
+            sys.exit(1)
+        if not should_pass and not any(
+            e.validator == "required" and list(e.path) == [] and "'x402Version'" in e.message for e in errs
+        ):
+            print(f"[-] FAIL: mixed matrix expected root required: x402Version on {candidate_doc!r}")
+            sys.exit(1)
+    print(f"[PASS] combinatorial x402Version truth table: all {len(mixed_matrix)} mixed & vacuous cases verified")
 
     # All-inline manifest without root x402Version where every entry carries its own x402Version: 2
     inline_per_entry_versioned = {
