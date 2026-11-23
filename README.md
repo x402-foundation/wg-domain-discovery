@@ -8,7 +8,7 @@ A schedule of public meetings can be found and the links to join can be found [h
 
 ## Resources
 
-- Past meeting notes and agendas are [online](https://docs.google.com/document/d/1NabJjDrjiIwziG1Bpe09oFtCr8aj7_myk_NcbiTvBYw/edit?tab=t.0).
+- Past meeting notes and agendas are [online](https://docs.google.com/document/d/1BDpKlLTzOLljiZEYTkLvb3ZsLmZDpaXWiGUpnHG-WtA/edit?tab=t.0).
 - Recordings of our meetings are found in LFX and are accessible through the [public calendar](https://x402.org/get-involved/#calendar).
 
 ## Communication Channels
