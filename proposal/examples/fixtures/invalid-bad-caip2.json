@@ -1,0 +1,15 @@
+{
+  "x402Version": 2,
+  "resources": [
+    {
+      "path": "/api/v1/test",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "ILLEGAL_NETWORK_WITHOUT_NAMESPACE",
+          "amount": "100"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "resource-server",
+  "resources": [
+    {
+      "url": "https://api.example.com/x402/gas",
+      "method": "GET",
+      "description": "Gas prices"
+    },
+    {
+      "url": "https://api.example.com/x402/quote",
+      "methods": ["GET", "POST"]
+    }
+  ],
+  "updated": "2026-10-27T00:00:00Z"
+}

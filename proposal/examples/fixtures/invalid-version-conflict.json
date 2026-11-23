@@ -1,0 +1,16 @@
+{
+  "x402Version": 2,
+  "resources": [
+    {
+      "x402Version": 1,
+      "path": "/api/v1/conflict",
+      "accepts": [
+        {
+          "scheme": "exact",
+          "network": "eip155:8453",
+          "amount": "100"
+        }
+      ]
+    }
+  ]
+}
