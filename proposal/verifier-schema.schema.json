@@ -14,6 +14,27 @@
       ]
     },
     "evidence": { "type": "string", "enum": ["none", "terms", "probe", "purchase"] },
+    "purchase_by": {
+      "type": "string",
+      "enum": ["verifier", "relayed"],
+      "description": "Who performed the purchase behind evidence purchase. verifier: the verifier paid for and received the resource itself. relayed: the verifier holds a record of another party's paid call, named in purchase_source. Appears only with evidence purchase."
+    },
+    "purchase_source": {
+      "type": "object",
+      "description": "The source of a relayed purchase. A relayed purchase reaches evidence purchase only if a client can check record_url offline, as a signature over the record's bytes against a key bound to source_domain, without calling the source and without trusting the relaying verifier.",
+      "properties": {
+        "source_domain": { "type": "string" },
+        "record_url": { "type": "string", "format": "uri", "description": "The source's signed record of the paid call." },
+        "key_url": { "type": "string", "format": "uri", "description": "Where the source publishes its signing key, under source_domain." },
+        "key_id": { "type": "string", "description": "Names the signing key when key_url serves more than one." }
+      },
+      "required": ["source_domain", "record_url", "key_url"]
+    },
+    "method_digest": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+:[0-9a-f]+$",
+      "description": "Digest of the method document this verdict was produced under, as <algorithm>:<lowercase hex> over the document's bytes as served, for example sha256:<64 hex>."
+    },
     "detail": {
       "type": "object",
       "description": "Companion to reason for codes that reference a specific mismatched field. field is always required when detail is present.",
@@ -43,7 +64,16 @@
             "verifier_domain": { "type": "string" }
           }
         },
-        "valid_until": { "type": "string", "format": "date-time" }
+        "valid_until": { "type": "string", "format": "date-time" },
+        "relationship": {
+          "type": "array",
+          "description": "The verifier's declared commercial interest in this verdict, from a closed, append-only set. A disclosure, not evidence of independence. An absent value is read as undisclosed. none and undisclosed each stand alone.",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "enum": ["none", "paid-by-resource", "paid-by-client", "earns-from-routing", "undisclosed"] },
+          "if": { "contains": { "enum": ["none", "undisclosed"] } },
+          "then": { "maxItems": 1 }
+        }
       },
       "required": ["key_url", "record_url", "subject", "valid_until"]
     },
@@ -80,6 +110,17 @@
         "properties": { "reason": { "enum": ["wrong-domain", "terms-mismatch", "mapping-unknown", "mapping-stale"] } }
       },
       "then": { "required": ["detail"] }
+    },
+    {
+      "if": { "required": ["purchase_by"] },
+      "then": { "properties": { "evidence": { "const": "purchase" } } }
+    },
+    {
+      "if": {
+        "properties": { "purchase_by": { "const": "relayed" } },
+        "required": ["purchase_by"]
+      },
+      "then": { "required": ["purchase_source"] }
     }
   ]
 }
